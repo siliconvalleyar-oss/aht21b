@@ -210,6 +210,33 @@ bool Device_t::initHardware() {
     return true;
 }
 
+void Device_t::printDeviceSummary(bool hardwareReady) {
+    // Resumen de arranque: lista los dispositivos que la auto-detección dejó
+    // activos. Sin I2C (sin root) no hay ningún dispositivo.
+    if (!hardwareReady) {
+        std::printf("[hw] Dispositivos activos: ninguno (modo consola, sin I2C)\n");
+        return;
+    }
+    std::printf("[hw] Dispositivos activos:");
+    int count = 0;
+    if (useAht21b_) {
+        std::printf(" AHT21B (0x%02X)", aht21bAddr_);
+        ++count;
+    }
+    if (useBh1750_) {
+        std::printf(" BH1750 (0x%02X)", bh1750Addr_);
+        ++count;
+    }
+    if (useOled_ && oled_ != nullptr) {
+        std::printf(" OLED (0x%02X)", oledAddr_);
+        ++count;
+    }
+    if (count == 0) {
+        std::printf(" ninguno");
+    }
+    std::printf("\n");
+}
+
 void Device_t::printReadings() {
     // Solo se muestran los dispositivos detectados al arrancar; un sensor
     // ausente no aparece (ni se lee, ni gasta tiempo en el bus).
@@ -286,9 +313,11 @@ void Device_t::run() {
     std::signal(SIGINT, handleSignal);
     std::signal(SIGTERM, handleSignal);
 
-    // 4) Configuración y hardware (tolerante a fallos).
+    // 4) Configuración y hardware (tolerante a fallos): la auto-detección
+    //    decide qué dispositivos quedan activos.
     loadConfig();
-    initHardware();
+    const bool hardwareReady = initHardware();
+    printDeviceSummary(hardwareReady);
 
     // 5) Bucle principal: lee los sensores, imprime cada printIntervalMs y
     //    refresca el OLED, hasta Ctrl+C.

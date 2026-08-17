@@ -43,6 +43,10 @@ private:
     // el display ausente no impiden arrancar la app.
     bool initHardware();
 
+    // Resumen de arranque: lista los dispositivos que la auto-detección dejó
+    // activos ("ninguno" si no hay I2C o nada respondió en el bus).
+    void printDeviceSummary(bool hardwareReady);
+
     // Imprime las últimas lecturas en consola con timestamp.
     void printReadings();
 
