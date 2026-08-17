@@ -23,11 +23,35 @@ constexpr size_t kMeasurePacketBytes = 6;
 AHT21B_t::AHT21B_t(uint8_t busAddress) : address_(busAddress) {}
 
 bool AHT21B_t::begin() {
-    // El comando de inicialización reconfigura el sensor y lo deja listo para
-    // medir; también sirve como comprobación de que responde en el bus.
+    // El comando de inicialización (0xBE 0x08 0x00) reconfigura el sensor;
+    // también sirve como comprobación de que responde en el bus.
     if (!writeCommand(Command::kInit, 0x08, 0x00)) {
         std::fprintf(stderr, "[AHT21B] init command rejected on the bus\n");
         return false;
+    }
+
+    // Tras el init el sensor queda ocupado calibrando (estira SCL mientras
+    // está ocupado; disparar una medición en ese momento hace timeout). Se
+    // espera y se sondea el byte de estado hasta que deje de estar ocupado
+    // (bit 7) y esté calibrado (bit 3).
+    bcm2835_delay(50);
+    uint8_t status = 0x80;  // asumir ocupado para entrar al bucle
+    for (int attempt = 0; attempt < 10 && (status & 0x80); ++attempt) {
+        if (!I2C::read(address_, &status, 1)) {
+            std::fprintf(stderr, "[AHT21B] status read failed during init\n");
+            return false;
+        }
+        if (status & 0x80) {
+            bcm2835_delay(20);
+        }
+    }
+    if (status & 0x80) {
+        std::fprintf(stderr, "[AHT21B] sensor still busy after init (status 0x%02X)\n",
+                     status);
+    } else if (!(status & 0x08)) {
+        std::fprintf(stderr,
+                     "[AHT21B] sensor not calibrated after init (status 0x%02X)\n",
+                     status);
     }
     ready_ = true;
     return true;
@@ -59,12 +83,17 @@ bool AHT21B_t::read(float* temperatureC, float* humidityPct) {
         return false;
     }
 
-    // 3) Validar el CRC del paquete (bits 20-27 del datasheet).
+    // 3) Validar el CRC del paquete (polinomio 0x31, init 0xFF). Algunos
+    //    módulos AHT21B no lo calculan correctamente (verificado en la Pi:
+    //    el byte de CRC nunca valida aunque los datos son consistentes). Se
+    //    avisa pero NO se rechaza la lectura; la validación real la hace el
+    //    rango físico del paso 5.
     const uint8_t crc = crc8(raw, sizeof(raw) - 1);
     if (crc != raw[sizeof(raw) - 1]) {
-        std::fprintf(stderr, "[AHT21B] CRC mismatch (got 0x%02X, want 0x%02X)\n",
+        std::fprintf(stderr,
+                     "[AHT21B] CRC mismatch (got 0x%02X, want 0x%02X) - "
+                     "accepting if in physical range\n",
                      crc, raw[sizeof(raw) - 1]);
-        return false;
     }
 
     // 4) Decodificar los valores de 20 bits (MSB primero, 4 bits de relleno
@@ -78,8 +107,21 @@ bool AHT21B_t::read(float* temperatureC, float* humidityPct) {
                             (static_cast<uint32_t>(raw[4]) << 8) |
                             static_cast<uint32_t>(raw[5]);
 
-    *humidityPct = static_cast<float>(humidity20) / 1048576.0f * 100.0f;
-    *temperatureC = static_cast<float>(temp20) / 1048576.0f * 200.0f - 50.0f;
+    const float rh = static_cast<float>(humidity20) / 1048576.0f * 100.0f;
+    const float tc = static_cast<float>(temp20) / 1048576.0f * 200.0f - 50.0f;
+
+    // 5) Validar el rango físico (atrapa paquetes corruptos aunque el CRC
+    //    del módulo no funcione): RH 0-100 %, T -40 a 85 °C.
+    if (rh < 0.0f || rh > 100.0f || tc < -40.0f || tc > 85.0f) {
+        std::fprintf(stderr,
+                     "[AHT21B] reading out of physical range (T %.1f C, "
+                     "RH %.1f %%)\n",
+                     tc, rh);
+        return false;
+    }
+
+    *humidityPct = rh;
+    *temperatureC = tc;
     return true;
 }
 

@@ -25,15 +25,18 @@ uint64_t nowUs() {
             .count());
 }
 
-// Deja el controlador en un estado limpio tras un error o timeout: vacía el
-// FIFO y borra los flags de estado para que la siguiente transacción arranque
-// de cero (el bit I2CEN queda activo, así que no hace falta volver a
-// inicializar el periférico).
+// Deja el controlador en un estado limpio tras un error o timeout. Tras
+// abandonar una transacción a mitad de camino (nuestro timeout), la máquina
+// de estados del BSC puede quedar trabada: se desactiva el periférico, se
+// vacía el FIFO y se borran los flags, y se vuelve a habilitar (sin tocar la
+// configuración de clock).
 void recover(volatile uint32_t* control, volatile uint32_t* status) {
-    bcm2835_peri_set_bits(control, BCM2835_BSC_C_CLEAR_1, BCM2835_BSC_C_CLEAR_1);
+    bcm2835_peri_write_nb(control, 0);  // desactivar el controlador
     bcm2835_peri_write_nb(status,
                           BCM2835_BSC_S_CLKT | BCM2835_BSC_S_ERR |
                           BCM2835_BSC_S_DONE);
+    bcm2835_peri_set_bits(control, BCM2835_BSC_C_CLEAR_1, BCM2835_BSC_C_CLEAR_1);
+    bcm2835_peri_write_nb(control, BCM2835_BSC_C_I2CEN);  // re-habilitar
 }
 
 }  // namespace
