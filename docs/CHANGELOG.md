@@ -4,6 +4,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 La versión coincide siempre con el archivo `VERSION` y con el último tag
 (`vX.Y.Z`, ver `LEARNINGS.md`).
 
+## [0.2.8] - 2026-08-17
+
+### Añadido
+- **`scripts/tag_and_push.sh`**: automatiza el ciclo de versionado de
+  LEARNINGS.md — calcula la siguiente versión desde el último tag (ciclo
+  patch 0-9), bumpea `VERSION`, commitea el bump, crea el tag y pushea
+  `main` + tag, para que ningún push quede sin tag.
+
 ## [0.2.5] - 2026-08-17
 
 ### Corregido

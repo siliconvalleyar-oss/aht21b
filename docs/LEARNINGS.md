@@ -36,6 +36,20 @@
 - **No se puede retroceder de versión.** Una vez publicado un tag, no se puede reemplazar. Si hay un error, se crea un nuevo tag con el siguiente número en la secuencia.
 - **El archivo VERSION empieza en 0.1.0** que corresponde al tag `v0.1.0`.
 
+### Automatización
+
+`scripts/tag_and_push.sh` ejecuta el ciclo completo de forma mecánica:
+
+```bash
+./scripts/tag_and_push.sh                    # sin cambios pendientes
+./scripts/tag_and_push.sh "feat: mensaje"    # commitea lo pendiente y sigue
+```
+
+Calcula la siguiente versión desde el último tag (con el ciclo patch 0-9),
+actualiza `VERSION`, commitea el bump, crea el tag y pushea `main` + tag.
+Todo push debe pasar por este script (o repetir exactamente sus pasos) para
+que ningún push quede sin tag.
+
 ### ¿Para qué sirve este esquema?
 
 - Cada versión es única e inmutable
