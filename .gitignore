@@ -1,6 +1,8 @@
 # Build artifacts
 bin/
 obj/
+# Binarios de los ejemplos (se compilan dentro de examples/)
+examples/aht21b
 
 # Editor/OS files
 *.swp

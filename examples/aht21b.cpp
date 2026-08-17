@@ -32,8 +32,10 @@ bool writeCommand(int file, const uint8_t* cmd, size_t len) {
         return true;
     }
     std::cerr << "  write() falló: " << std::strerror(errno);
-    if (errno == EREMOTEIO) {
-        std::cerr << " (NACK: ¿el sensor está conectado y alimentado?)";
+    // El subsistema I2C del kernel reporta un fallo de transferencia (NACK o
+    // timeout por SCL estirado) como EREMOTEIO o EIO, según el driver.
+    if (errno == EREMOTEIO || errno == EIO) {
+        std::cerr << " (el sensor no respondió: ¿conectado y alimentado a 3.3V?)";
     }
     std::cerr << std::endl;
     return false;
