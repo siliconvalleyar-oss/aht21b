@@ -25,6 +25,15 @@ void SSD1306::OLEDbegin( uint16_t I2C_speed , uint8_t I2c_address)
 {
 	_I2C_speed = I2C_speed;
 	_I2C_address = I2c_address;
+	// The frame buffer must be allocated before any draw/clear/update call:
+	// the original library allocates it here with malloc. Without it,
+	// OLEDclearBuffer() memsets a null pointer and the app crashes.
+	if (buffer == nullptr) {
+		buffer = (uint8_t*) malloc(_OLED_WIDTH * (_OLED_HEIGHT / 8));
+		if (buffer == nullptr) {
+			printf("Error: SSD1306 buffer malloc failed\n");
+		}
+	}
 	OLED_I2C_ON();
 	OLEDinit();
 	OLED_I2C_OFF();

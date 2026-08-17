@@ -10,6 +10,7 @@
 // ************** Library INCLUDES ********
 #include <bcm2835.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -80,7 +81,7 @@
 class SSD1306 : public SSD1306_graphics  {
   public:
 	SSD1306(int16_t oledwidth, int16_t oledheight);
-	~SSD1306(){};
+	~SSD1306(){ free(buffer); buffer = nullptr; };
 
 	uint8_t* buffer = nullptr;
 
