@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cstddef>  // size_t
+#include "drivers/AHT21B_decode.hpp"
+
 #include <cstdint>
 
 // Driver para el sensor de temperatura y humedad AOSONG AHT21B, leído por I2C
@@ -45,7 +46,8 @@ public:
     // lee 6 bytes (estado + humedad 20-bit + temperatura 20-bit + CRC).
     // Devuelve true y rellena *temperatureC (grados Celsius) y *humidityPct
     // (0-100 %) si la lectura fue válida; false en caso de error de bus o
-    // CRC inválido.
+    // valores fuera del rango físico (la decodificación y el rango viven en
+    // AHT21B_decode.hpp; el CRC se reporta como aviso, no como error).
     bool read(float* temperatureC, float* humidityPct);
 
     // true tras un begin() exitoso.
@@ -57,10 +59,6 @@ private:
     // conversión, que arranca dentro del propio write.
     bool writeCommand(uint8_t c0, uint8_t c1, uint8_t c2,
                       uint32_t timeoutUs = 100000);
-
-    // CRC8 (polinomio 0x31, init 0xFF) sobre `len` bytes; usado para validar
-    // el paquete de 6 bytes de la medición.
-    static uint8_t crc8(const uint8_t* data, size_t len);
 
     uint8_t address_;  // dirección I2C del sensor
     bool ready_ = false;

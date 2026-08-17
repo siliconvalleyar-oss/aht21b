@@ -87,11 +87,11 @@ bool AHT21B_t::read(float* temperatureC, float* humidityPct) {
         return false;
     }
 
-    // 3) Validar el CRC del paquete (polinomio 0x31, init 0xFF). Algunos
-    //    módulos AHT21B no lo calculan correctamente (verificado en la Pi:
-    //    el byte de CRC nunca valida aunque los datos son consistentes). Se
-    //    avisa pero NO se rechaza la lectura; la validación real la hace el
-    //    rango físico del paso 5.
+    // 3) Validar el CRC del paquete (polinomio 0x31, init 0xFF; ver
+    //    AHT21B_decode.hpp). Algunos módulos AHT21B no lo calculan
+    //    correctamente (verificado en la Pi: el byte de CRC nunca valida
+    //    aunque los datos son consistentes). Se avisa pero NO se rechaza la
+    //    lectura; la validación real la hace el rango físico del paso 4.
     const uint8_t crc = crc8(raw, sizeof(raw) - 1);
     if (crc != raw[sizeof(raw) - 1]) {
         std::fprintf(stderr,
@@ -100,48 +100,13 @@ bool AHT21B_t::read(float* temperatureC, float* humidityPct) {
                      crc, raw[sizeof(raw) - 1]);
     }
 
-    // 4) Decodificar los valores de 20 bits (MSB primero, 4 bits de relleno
-    //    por canal) y escalarlos a las unidades físicas:
-    //      HR%  = (humedad20 / 2^20) * 100
-    //      T°C  = (temperatura20 / 2^20) * 200 - 50
-    const uint32_t humidity20 = (static_cast<uint32_t>(raw[1]) << 12) |
-                                (static_cast<uint32_t>(raw[2]) << 4) |
-                                (static_cast<uint32_t>(raw[3]) >> 4);
-    const uint32_t temp20 = (static_cast<uint32_t>(raw[3] & 0x0F) << 16) |
-                            (static_cast<uint32_t>(raw[4]) << 8) |
-                            static_cast<uint32_t>(raw[5]);
-
-    const float rh = static_cast<float>(humidity20) / 1048576.0f * 100.0f;
-    const float tc = static_cast<float>(temp20) / 1048576.0f * 200.0f - 50.0f;
-
-    // 5) Validar el rango físico (atrapa paquetes corruptos aunque el CRC
-    //    del módulo no funcione): RH 0-100 %, T -40 a 85 °C.
-    if (rh < 0.0f || rh > 100.0f || tc < -40.0f || tc > 85.0f) {
-        std::fprintf(stderr,
-                     "[AHT21B] reading out of physical range (T %.1f C, "
-                     "RH %.1f %%)\n",
-                     tc, rh);
+    // 4) Decodificar los valores de 20 bits y validar el rango físico
+    //    (atrapa paquetes corruptos aunque el CRC del módulo no funcione).
+    if (!decodeMeasurement(raw, temperatureC, humidityPct)) {
+        std::fprintf(stderr, "[AHT21B] reading out of physical range\n");
         return false;
     }
-
-    *humidityPct = rh;
-    *temperatureC = tc;
     return true;
-}
-
-uint8_t AHT21B_t::crc8(const uint8_t* data, size_t len) {
-    // CRC-8 con polinomio 0x31 (x^8 + x^5 + x^4 + 1), valor inicial 0xFF,
-    // como especifica el datasheet del AHT21B para el último byte del
-    // paquete de medición.
-    uint8_t crc = 0xFF;
-    for (size_t i = 0; i < len; ++i) {
-        crc ^= data[i];
-        for (int bit = 0; bit < 8; ++bit) {
-            crc = (crc & 0x80) ? static_cast<uint8_t>((crc << 1) ^ 0x31)
-                               : static_cast<uint8_t>(crc << 1);
-        }
-    }
-    return crc;
 }
 
 }  // namespace AHT21B

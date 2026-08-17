@@ -71,7 +71,7 @@ DEPS := $(OBJS:.o=.d)
 
 TARGET     := $(BIN_DIR)/$(BINARY)
 
-.PHONY: all clean distclean install run help
+.PHONY: all clean distclean install run test help
 
 all: $(TARGET)
 
@@ -88,6 +88,21 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp VERSION
 
 $(BIN_DIR) $(OBJ_DIR):
 	@mkdir -p $@
+
+# ---- Tests (sin hardware) ---------------------------------------------------
+
+# Unit tests de decodificación (AHT21B CRC/20-bit, BH1750 lux): funciones
+# puras, se compilan con el compilador del host (TEST_CXX) y no requieren
+# bcm2835 ni I2C.
+TEST_CXX  ?= g++
+TEST_SRC  := tests/test_decode.cpp
+TEST_BIN  := $(BIN_DIR)/test_decode
+
+test: $(TEST_BIN)
+	./$(TEST_BIN)
+
+$(TEST_BIN): $(TEST_SRC) | $(BIN_DIR)
+	$(TEST_CXX) -std=$(CXXSTD) -Wall -Wextra -I$(INC_DIR) -o $@ $(TEST_SRC)
 
 # ---- Convenience ------------------------------------------------------------
 

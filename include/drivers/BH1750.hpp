@@ -14,6 +14,23 @@
 // El chip responde en la dirección 0x23 (35 decimal) por defecto.
 namespace BH1750 {
 
+// Factor de conversión del modo de alta resolución: el valor crudo de 16
+// bits se divide entre 1.2 para obtener lux (datasheet BH1750FVI).
+inline constexpr float kLuxScale = 1.2f;
+
+// Convierte el valor crudo de 16 bits a lux (÷ kLuxScale). Función pura,
+// usada por el driver y por los unit tests (tests/test_decode.cpp).
+inline float luxFromRaw(uint16_t raw) {
+    return static_cast<float>(raw) / kLuxScale;
+}
+
+// Convierte los 2 bytes del registro de datos (MSB primero) a lux.
+inline float luxFromBytes(const uint8_t raw[2]) {
+    const uint16_t value = static_cast<uint16_t>(
+        (static_cast<uint16_t>(raw[0]) << 8) | raw[1]);
+    return luxFromRaw(value);
+}
+
 // Dirección I2C por defecto del BH1750 (0x23; 0x5C con el pin ADDR alto).
 inline constexpr uint8_t kDefaultAddress = 0x23;
 

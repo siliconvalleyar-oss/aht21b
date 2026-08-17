@@ -8,10 +8,6 @@ namespace BH1750 {
 
 namespace {
 
-// Factor de conversión del modo de alta resolución: el valor crudo de 16
-// bits se divide entre 1.2 para obtener lux (datasheet BH1750FVI).
-constexpr float kLuxScale = 1.2f;
-
 // Tiempo máximo de conversión en modo continua de alta resolución.
 constexpr uint32_t kMaxConversionMs = 180;
 
@@ -49,10 +45,8 @@ bool BH1750_t::read(float* lux) {
         return false;
     }
 
-    // Convertir el valor de 16 bits (MSB primero) a lux dividiendo por 1.2.
-    const uint16_t value = static_cast<uint16_t>(
-        (static_cast<uint16_t>(raw[0]) << 8) | raw[1]);
-    *lux = static_cast<float>(value) / kLuxScale;
+    // Convertir los 2 bytes (MSB primero) a lux (÷1.2; ver BH1750.hpp).
+    *lux = luxFromBytes(raw);
     return true;
 }
 
