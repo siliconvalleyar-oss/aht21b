@@ -35,7 +35,8 @@ make clean && make -j4        # compila sin errores en 32 y 64 bits
 ## Checklist
 
 - [ ] Compila limpio con `make clean && make -j4`
-- [ ] `--version` muestra `v0.1.0`
+- [ ] `--version` muestra `v0.1.1`
+- [ ] Sin root, `./bin/App` corre en modo consola sin crashear (aviso por stderr)
 - [ ] `i2cdetect` encuentra los 3 dispositivos
 - [ ] Lecturas estables y plausibles de los 2 sensores
 - [ ] OLED muestra las 4 filas (con sudo)

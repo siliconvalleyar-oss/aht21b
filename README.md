@@ -36,7 +36,7 @@ make clean && make -j4
 ## Uso
 
 ```bash
-./bin/App --version       # App v0.1.0  (versión en tiempo de compilación)
+./bin/App --version       # App v0.1.1  (versión en tiempo de compilación)
 ./bin/App --help          # ayuda
 ./bin/App                 # bucle de lecturas (Ctrl+C para salir)
 sudo ./bin/App            # con OLED (bcm2835 necesita /dev/mem)

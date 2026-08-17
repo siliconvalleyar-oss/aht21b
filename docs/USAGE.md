@@ -16,16 +16,20 @@ The version is baked in at compile time from the VERSION file.
 ## Ejemplos
 
 ```bash
-./bin/App --version        # App v0.1.0
+./bin/App --version        # App v0.1.1
 ./bin/App --help           # ayuda
-./bin/App                  # bucle de lecturas (Ctrl+C para salir)
-sudo ./bin/App             # con OLED (bcm2835 necesita /dev/mem)
+sudo ./bin/App             # lecturas de sensores + OLED (bcm2835 I2C necesita root)
+./bin/App                  # sin root: modo consola (sin sensores ni OLED), sin crash
 ```
+
+> **Root**: los sensores AHT21B/BH1750 y el OLED usan el I2C de bcm2835, que
+> requiere `/dev/mem` (root). Sin root la app arranca igual pero en modo
+> consola (avisa por stderr y muestra `no data`).
 
 ## Salida típica
 
 ```
-AHT21B_bh1750 v0.1.0 - AHT21B temp/humidity + BH1750 light (I2C)
+AHT21B_bh1750 v0.1.1 - AHT21B temp/humidity + BH1750 light (I2C)
 [2026-08-17 10:00:05] loop=5 | Temp 25.42 C | RH 45.3 % | Lux 320.5
 [2026-08-17 10:00:07] loop=10 | Temp 25.40 C | RH 45.4 % | Lux 321.0
 ```

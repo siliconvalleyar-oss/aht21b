@@ -12,7 +12,7 @@
 | Campo | Valor |
 |---|---|
 | Proyecto | AHT21B_bh1750 (temp/humedad + luz por I2C) |
-| Versión | 0.1.0 (v0.1.0) |
+| Versión | 0.1.1 (v0.1.1) |
 | Fecha | 2026-08-17 |
 | Estado global | ✅ Generación completa + compilación verificada; validación en hardware pendiente |
 

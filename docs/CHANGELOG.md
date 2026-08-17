@@ -4,6 +4,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 La versión coincide siempre con el archivo `VERSION` y con el último tag
 (`vX.Y.Z`, ver `LEARNINGS.md`).
 
+## [0.1.1] - 2026-08-17
+
+### Corregido
+- **Segfault al arrancar sin root**: bcm2835 v1.71, sin root, mapea solo
+  /dev/gpiomem (GPIO) y deja el puntero I2C (bsc1) en MAP_FAILED; cualquier
+  acceso I2C escribía sobre una dirección inválida y la app moría con SIGSEGV
+  (verificado en Pi 4). Ahora `initHardware()` exige root para usar I2C y,
+  sin root, la app corre en modo consola sin crashear.
+
 ## [0.1.0] - 2026-08-17
 
 ### Añadido
