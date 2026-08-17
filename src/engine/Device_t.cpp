@@ -145,6 +145,7 @@ bool Device_t::initHardware() {
     // bcm2835_init() mapea /dev/mem (requiere root o el usuario en el grupo
     // apropiado); si falla, la app avisa y sigue con solo consola.
     if (!bcm2835_init()) {
+        useAht21b_ = useBh1750_ = useOled_ = false;
         std::fprintf(stderr, "[hw] bcm2835_init() failed; running without hardware\n");
         return false;
     }
@@ -155,6 +156,9 @@ bool Device_t::initHardware() {
     // sobre una direccion invalida -> SIGSEGV. Los sensores y el OLED necesitan
     // I2C real (/dev/mem), asi que sin root se continua en modo consola.
     if (geteuid() != 0) {
+        // Sin I2C no hay dispositivos: se limpian los flags para que el bucle
+        // no intente leer sensores (modo consola puro, sin "read error").
+        useAht21b_ = useBh1750_ = useOled_ = false;
         std::fprintf(stderr,
                      "[hw] bcm2835 I2C (sensores/OLED) requiere root: ejecutar "
                      "con 'sudo ./bin/App'; sin root la app corre en modo consola\n");
