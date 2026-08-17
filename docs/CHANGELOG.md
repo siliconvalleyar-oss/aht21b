@@ -4,6 +4,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 La versión coincide siempre con el archivo `VERSION` y con el último tag
 (`vX.Y.Z`, ver `LEARNINGS.md`).
 
+## [0.2.2] - 2026-08-17
+
+### Añadido
+- **Auto-detección de dispositivos al arrancar**: cada dispositivo (AHT21B,
+  BH1750, OLED) se sondea en el bus y solo se usan los que responden. Un
+  sensor ausente ya no aparece en la salida (`X: no data`) ni gasta tiempo ni
+  reintentos en el bus: se deshabilita y se avisa una vez por stderr
+  (`[hw] BH1750 NO detectado (0x23) - deshabilitado`).
+- El OLED se sondea con un write barato antes de inicializarlo: sin display,
+  el arranque ya no quema cientos de reintentos (~7 s) ni cada vuelta del
+  bucle pierde tiempo en `OLEDupdate()`.
+
 ## [0.2.1] - 2026-08-17
 
 ### Añadido

@@ -12,9 +12,9 @@
 | Campo | Valor |
 |---|---|
 | Proyecto | AHT21B_bh1750 (temp/humedad + luz por I2C) |
-| Versión | 0.2.1 (v0.2.1) |
+| Versión | 0.2.2 (v0.2.2) |
 | Fecha | 2026-08-17 |
-| Estado global | ✅ Software completo y verificado (build remoto OK, sin colgadas) + **unit tests de decodificación sin hardware** (26 checks, 0 failures). El AHT21B **sí lee datos válidos** (RH≈78 %, T≈20 °C vía kernel) pero sigue con **contacto intermitente**: aparece en 0x38 y desaparece. La app está lista para leer en cuanto el wiring sea estable |
+| Estado global | ✅ Software completo y verificado (build remoto OK, sin colgadas) + unit tests (26 checks) + **auto-detección de dispositivos** (0.2.2): solo se usan los conectados; los ausentes se deshabilitan y no aparecen en la salida. El AHT21B sigue con **contacto intermitente** (aparece en 0x38 y desaparece) |
 
 ## 2. Resumen
 
@@ -46,6 +46,7 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 - [x] Fix 0.1.8: `begin()` sondea el estado hasta que el sensor deja de estar ocupado tras el init; **CRC no fatal** (este módulo no lo calcula bien; validan los rangos físicos); `recover()` resetea el controlador BSC
 - [x] Fix 0.1.9: trigger del AHT21B con timeout de **500 ms** (el sensor estira SCL durante la conversión ~80 ms; con 100 ms fallaba intermitente)
 - [x] **Unit tests sin hardware** (0.2.1): `make test` — CRC-8 AHT21B (vectores doble-verificados), decodificación 20-bit con bordes y fuera de rango, lux BH1750. 26 checks, 0 failures. Decodificación extraída a `AHT21B_decode.hpp` (inline, sin bcm2835)
+- [x] **Auto-detección de dispositivos** (0.2.2): sondeo al arrancar de AHT21B/BH1750/OLED; solo se usan los que responden. El OLED se sondea con un write barato antes de inicializarlo (sin display, el arranque ya no tarda ~7 s)
 - [ ] Pruebas con sensores **conectados de forma estable** — el AHT21B **sí respondió con datos válidos** (RH≈78 %, T≈20 °C, vía kernel/Python) pero vuelve a **desaparecer del bus** (contacto intermitente; `i2cdetect` vacío otra vez). Acción: reseat del sensor, verificar 3V3 (nunca 5V), capacitor 100 nF VDD-GND, cables cortos. La app (v0.1.9) está lista para leer
 
 ## 4. Registro de pruebas (completar)
@@ -69,3 +70,4 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 | 2026-08-17 | `sudo timeout 15 ./bin/App` (v0.1.8, sensor presente) | ⚠️ init y status OK, pero el **trigger (0xAC) hacía timeout** (el sensor estira SCL durante la conversión ~80 ms; 100 ms quedaba al límite) | 0.1.9: trigger con 500 ms |
 | 2026-08-17 | Post-app: `i2cget` status + `i2cdetect` | ⚠️ **El sensor desapareció del bus otra vez** (NACK, i2cdetect vacío) — patrón de contacto intermitente | Reseat del sensor; cuando 0x38 sea estable, la app debe leer Temp/RH |
 | 2026-08-17 | Unit tests de decodificación (0.2.1) | ✅ `make test`: **26 checks, 0 failures** (CRC-8, 20-bit RH/T, lux) | Decodificación extraída a `AHT21B_decode.hpp` para testear sin hardware |
+| 2026-08-17 | Auto-detección (0.2.2) | ✅ Implementada: `begin()` de cada driver sondea; los ausentes se deshabilitan (mensaje único por stderr) y no aparecen en la salida. El OLED se sondea con un write de 2 bytes antes de inicializarlo | Verificación runtime pendiente (con y sin dispositivos conectados) |

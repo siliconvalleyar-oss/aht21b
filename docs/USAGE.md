@@ -24,14 +24,40 @@ sudo ./bin/App             # lecturas de sensores + OLED (bcm2835 I2C necesita r
 
 > **Root**: los sensores AHT21B/BH1750 y el OLED usan el I2C de bcm2835, que
 > requiere `/dev/mem` (root). Sin root la app arranca igual pero en modo
-> consola (avisa por stderr y muestra `no data`).
+> consola, sin lecturas ni crash.
+
+## Auto-detección de dispositivos
+
+Al arrancar, la app sondea cada dispositivo en el bus I2C y **solo usa los que
+responden**: un sensor o display ausente se deshabilita (avisa una vez por
+stderr) y desaparece de la salida — no aparece `no data` ni gasta tiempo ni
+reintentos en el bus.
+
+```
+[hw] AHT21B detectado (0x38)
+[hw] BH1750 NO detectado (0x23) - deshabilitado
+[hw] OLED NO detectado (0x3C) - deshabilitado
+```
+
+Los flags `use_*` de `config/config.cfg` solo limitan qué dispositivos se
+intentan; la detección decide cuáles quedan activos.
 
 ## Salida típica
 
+Con AHT21B + BH1750 conectados:
 ```
-AHT21B_bh1750 v0.1.1 - AHT21B temp/humidity + BH1750 light (I2C)
+AHT21B_bh1750 v0.2.2 - AHT21B temp/humidity + BH1750 light (I2C)
+[hw] AHT21B detectado (0x38)
+[hw] BH1750 detectado (0x23)
 [2026-08-17 10:00:05] loop=5 | Temp 25.42 C | RH 45.3 % | Lux 320.5
 [2026-08-17 10:00:07] loop=10 | Temp 25.40 C | RH 45.4 % | Lux 321.0
+```
+
+Con solo el AHT21B conectado (el resto ausente):
+```
+[hw] AHT21B detectado (0x38)
+[hw] BH1750 NO detectado (0x23) - deshabilitado
+[2026-08-17 10:00:05] loop=5 | Temp 25.42 C | RH 45.3 %
 ```
 
 ## Configuración (`config/config.cfg`)
