@@ -1,12 +1,13 @@
-# Workflow de Desarrollo
+# WORKFLOW — Flujo de Desarrollo
 
-Flujo de trabajo establecido para el proyecto VL53L0X.
+Flujo de trabajo establecido para el proyecto **AHT21B_bh1750**.
 
 ## Principios
 
 - **Cambios de codigo:** se hacen exclusivamente a nivel **local**, en `$PWD`
   (el repo local). Nada se edita directo en la maquina remota.
-- **Compilacion:** se realiza **solo de forma remota**, en la Raspberry Pi.
+- **Compilacion:** se realiza **solo de forma remota**, en la Raspberry Pi
+  (o con build cruzado desde la PC usando el sysroot armhf).
 - **Pruebas:** se ejecutan **solo de forma remota**, en la Raspberry Pi.
 - **Generacion y modificacion:** todo archivo generado o modificado vive en
   `$PWD` local. No se dejan archivos generados en el remoto.
@@ -16,16 +17,16 @@ Flujo de trabajo establecido para el proyecto VL53L0X.
 1. **Editar local:** realizar los cambios de codigo/documentacion en `$PWD`.
 2. **Commit local:** commitear con mensajes semanticos
    (`feat:`, `fix:`, `chore:`, `docs:`, etc.).
-3. **Push:** pushear los commits a `origin/main`.
+3. **Push:** pushear los commits a `origin/main` **con su tag** (ver abajo).
 4. **Actualizar remoto:** en la Pi, `git pull` para traer los cambios.
-5. **Compilar remoto:** build en la Pi.
-6. **Probar remoto:** ejecutar las pruebas en la Pi.
+5. **Compilar remoto:** `make clean && make -j4` en la Pi.
+6. **Probar remoto:** `./bin/App --version` y bucle de lecturas con sensores.
 
 ## Comandos de referencia
 
 ```bash
 # Edicion local (en $PWD)
-vim src/vl53l0x/VL53L0X_impl.cpp
+vim src/engine/Device_t.cpp
 
 # Commit y push local
 git add <archivos>
@@ -33,14 +34,13 @@ git commit -m "fix: ..."
 git push origin main
 
 # Bump de version y tag (cuando corresponda)
-echo "1.1.9" > VERSION
-git add VERSION && git commit -m "chore: bump version to 1.1.9"
-git tag v1.1.9
-git push origin main && git push origin v1.1.9
+echo "0.1.1" > VERSION
+git add VERSION && git commit -m "chore: bump version to 0.1.1"
+git tag v0.1.1
+git push origin main && git push origin v0.1.1
 
 # Actualizar, compilar y probar en la Pi (solo remoto)
-sshpass -e ssh -o StrictHostKeyChecking=no $USER@$HOSTMAME \
-  "cd /home/pi/src/vl53l0x_rpi && git pull --ff-only && make clean && make -j4 && make run"
+ssh pi@<ip> "cd AHT21B_bh1750 && git pull --ff-only && make clean && make -j4 && ./bin/App --version"
 ```
 
 ## Version de la app
@@ -49,42 +49,42 @@ Las reglas detalladas de versionado estan en [docs/LEARNINGS.md](LEARNINGS.md)
 (seccion "Git / Versionado"). Resumen:
 
 - **Todo push debe llevar su tag.** No se pushea sin tag.
-- **Tag = VERSION.** El tag lleva `v` (`v1.1.9`) y el archivo `VERSION`
-  lleva el mismo numero sin `v` (`1.1.9`). Siempre deben coincidir.
+- **Tag = VERSION.** El tag lleva `v` (`v0.1.1`) y el archivo `VERSION`
+  lleva el mismo numero sin `v` (`0.1.1`). Siempre deben coincidir.
 - **Proximo numero:** tag actual + 1 en el ultimo segmento, respetando el
-  ciclo patch 0-9 (ej: `v1.1.8` → `1.1.9`; `v1.1.9` → `1.2.0`).
-- **Ciclo patch 0-9 obligatorio:** no se pasa de `v1.0.9` a `v1.1.1`; debe ir a
-  `v1.1.0`. Cada minor tiene exactamente 10 patches (0 a 9).
+  ciclo patch 0-9 (ej: `v0.1.8` → `0.1.9`; `v0.1.9` → `0.2.0`).
+- **Ciclo patch 0-9 obligatorio:** no se pasa de `v0.1.9` a `v0.2.1`; debe ir a
+  `v0.2.0`. Cada minor tiene exactamente 10 patches (0 a 9).
 - **Cada commit significativo debe tener su tag.** No se salta ningun numero
   de version (no se pierde la secuencia).
 - **No eliminar tags publicados** y **no retroceder de version.** Si hay un
   error, se crea un nuevo tag con el siguiente numero de la secuencia.
-- El versionado arranco en `1.0.0` (`v1.0.0`).
+- El versionado arranco en `0.1.0` (`v0.1.0`).
 
 ### Como hacer un bump
 
 1. Obtener el ultimo tag publicado: `git tag --sort=-version:refname | head -1`
-   (ej: `v1.1.9`).
+   (ej: `v0.1.9`).
 2. Verificar que `VERSION` coincida con ese tag (sin `v`).
 3. Calcular el siguiente numero segun el ciclo patch 0-9.
 4. Actualizar `VERSION` con el nuevo numero.
 5. Commit `chore: bump version to X.Y.Z`, tag `vX.Y.Z` y push.
 
 ```bash
-echo "1.2.0" > VERSION
-git add VERSION && git commit -m "chore: bump version to 1.2.0"
-git tag v1.2.0
-git push origin main && git push origin v1.2.0
+echo "0.2.0" > VERSION
+git add VERSION && git commit -m "chore: bump version to 0.2.0"
+git tag v0.2.0
+git push origin main && git push origin v0.2.0
 ```
 
 ### Version en la app
 
 - El archivo `VERSION` (raiz del proyecto) es la fuente de la version.
-- El Makefile la inyecta en el build con `-DAPP_VERSION`.
-- Se muestra en el banner de presentacion de la app.
+- El Makefile la inyecta en el build con `-DVERSION="$(cat VERSION)"`.
+- Se muestra en el banner de presentacion de la app y con `./bin/App --version`.
 
 ## Recordatorios
 
-- No compilar ni probar en la maquina local.
+- No compilar ni probar en la maquina local (salvo build cruzado verificado).
 - No editar archivos dentro del repo remoto de la Pi; solo `git pull` y build.
 - La password de la Pi va en `$SSHPASS`; nunca mostrarla en pantalla.

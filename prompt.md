@@ -1,7 +1,7 @@
 INSTRUCCIONES COMPLETAS PARA EL ASISTENTE (PROMPT ÚNICO Y DEFINITIVO)
 ========================================================================
 
-Debes generar un proyecto C++ completo para Raspberry Pi (compatible con 32 y 64 bits) que use la librería bcm2835, siguiendo la estructura de carpetas y archivos que se detalla abajo. El proyecto debe ser autocontenido, compilable con make, y debe incluir todo el código fuente, cabeceras, scripts de instalación, documentación y archivos de configuración.
+Debes generar un proyecto C++ completo para Raspberry Pi (compatible con 32 y 64 bits) que use la librería bcm2835,y el dispositivo AHT21B siguiendo la estructura de carpetas y archivos que se detalla abajo. El proyecto debe ser autocontenido, compilable con make, y debe incluir todo el código fuente, cabeceras, scripts de instalación, documentación y archivos de configuración.
 
 ESTRUCTURA OBLIGATORIA (crear todos los directorios y archivos)
 ----------------------------------------------------------------
