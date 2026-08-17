@@ -19,8 +19,10 @@ mejoras). Se actualiza en cada sesión; se marca `[x]` cuando el item está
 - [x] Todos los `.md` de `docs/` completos + README.md
 - [x] `VERSION` = 0.1.0, `LICENSE` MIT
 - [x] Compilación verificada (build cruzado armhf: `bin/App` ELF 32-bit ARM, requiere GLIBC_2.4)
-- [ ] Pruebas en hardware real (Pi + sensores + OLED)
-- [ ] Repo remoto con tag `v0.1.0` (setup_git.sh)
+- [x] Fix v0.1.1: guard `bcm2835_init()` — sin root ya no crashea (modo consola); I2C requiere root (documentado)
+- [x] Build remoto en la Pi (`make clean && make -j4`) + `--version` → v0.1.1
+- [x] Repo remoto: `siliconvalleyar-oss/aht21b` público, tags v0.1.0 y v0.1.1
+- [ ] Pruebas con sensores **conectados**: `i2cdetect` no detecta nada (bus I2C vacío; falta wiring/3V3)
 
 ## Mejoras (ROADMAP)
 

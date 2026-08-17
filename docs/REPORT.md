@@ -14,7 +14,7 @@
 | Proyecto | AHT21B_bh1750 (temp/humedad + luz por I2C) |
 | Versión | 0.1.1 (v0.1.1) |
 | Fecha | 2026-08-17 |
-| Estado global | ✅ Generación completa + compilación verificada; validación en hardware pendiente |
+| Estado global | ✅ Generación completa + compilación verificada + build remoto OK; **hardware no conectado** (bus I2C vacío) |
 
 ## 2. Resumen
 
@@ -34,10 +34,12 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 - [x] Makefile con `-DVERSION="$(cat VERSION)"` y objetivos `all/clean/distclean/install`
 - [x] Scripts `install_deps.sh` y `setup_git.sh`
 - [x] Docs completos (26 archivos) y README.md
-- [x] `VERSION` = 0.1.0 y `LICENSE` MIT
+- [x] `VERSION` = 0.1.1 y `LICENSE` MIT
 - [x] Compilación verificada (build cruzado armhf GCC 10 + sysroot; `bin/App` ELF 32-bit ARM, requiere GLIBC_2.4/GLIBCXX_3.4.21)
-- [ ] Pruebas en hardware real (Pi + sensores + OLED) — pendiente
-- [ ] Repo remoto configurado con tag v0.1.0 — pendiente
+- [x] Build remoto en la Pi (`make clean && make -j4`) exitoso; `./bin/App --version` → v0.1.1
+- [x] Fix root/I2C: sin root (joy) → modo consola sin crash; con sudo → I2C inicializa y el bucle corre sin crash
+- [x] Repo remoto configurado: `siliconvalleyar-oss/aht21b` público, tags v0.1.0 y v0.1.1
+- [ ] Pruebas con sensores **conectados** — pendiente: `i2cdetect` no detecta ningún dispositivo (bus vacío; revisar wiring/3V3)
 
 ## 4. Registro de pruebas (completar)
 
@@ -45,6 +47,8 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 |---|---|---|---|
 | 2026-08-17 | Generación del código y la documentación | ✅ Completado | — |
 | 2026-08-17 | Build cruzado armhf (GCC 10 + sysroot) de todo el proyecto | ✅ `bin/App` ELF 32-bit ARM (GLIBC_2.4, GLIBCXX_3.4.21); solo 2 warnings de la librería SSD1306 | — |
-| _fecha_ | `make clean && make -j4` | _pendiente_ | — |
-| _fecha_ | `./bin/App --version` en la Pi | _pendiente_ | — |
-| _fecha_ | `i2cdetect -y 1` (0x23, 0x38, 0x3C) | _pendiente_ | — |
+| 2026-08-17 | Fix v0.1.1: guard de `bcm2835_init()` (sin root usa /dev/gpiomem y deja `bcm2835_bsc1` en MAP_FAILED → SIGSEGV en I2C) | ✅ Sin root: modo consola sin crash; con sudo: I2C operativo | root requerido para I2C (documentado en USAGE.md) |
+| 2026-08-17 | `make clean && make -j4` en la Pi (remoto) | ✅ exit 0, todos los .o + link `-lbcm2835` | — |
+| 2026-08-17 | `./bin/App --version` en la Pi | ✅ `App v0.1.1` | — |
+| 2026-08-17 | `./bin/App` con sudo (6 s, bucle completo) | ✅ exit 124 (timeout esperado), sin crash; NACK correctos | — |
+| 2026-08-17 | `i2cdetect -y 1` y `-y 0` | ❌ **Ningún dispositivo en el bus** (0x23, 0x38, 0x3C ausentes) | Conectar sensores + OLED a GPIO 2/3 (SDA/SCL) y 3V3/GND |
