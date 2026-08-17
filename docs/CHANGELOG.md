@@ -4,6 +4,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 La versión coincide siempre con el archivo `VERSION` y con el último tag
 (`vX.Y.Z`, ver `LEARNINGS.md`).
 
+## [0.1.9] - 2026-08-17
+
+### Corregido
+- **Timeout del trigger del AHT21B**: el sensor estira SCL durante toda la
+  conversión (~80 ms según datasheet), que arranca dentro del propio write
+  de 0xAC; con el límite de 100 ms quedaba justo al borde y fallaba
+  intermitente (el driver del kernel, con 1 s de timeout, leía bien). El
+  trigger ahora permite 500 ms; init y status mantienen el default.
+
+## [0.1.8] - 2026-08-17
+
+### Corregido
+- **El AHT21B nunca entregaba lecturas** aunque respondía en 0x38:
+  - `begin()` enviaba el init y volvía al instante; el sensor queda ocupado
+    calibrando justo después (estira SCL) y el primer trigger hacía timeout.
+    Ahora se sondea el byte de estado hasta que deja de estar ocupado y se
+    reporta el estado de calibración.
+  - **El byte de CRC nunca valida en este módulo** (verificado en la Pi con
+    el driver del kernel: valores consistentes y en rango, CRC siempre
+    falla). El CRC ahora es un aviso; la validación real la hace el rango
+    físico (RH 0-100 %, T -40..85 °C).
+  - `recover()` del helper I2C ahora resetea el controlador BSC completo
+    (disable → clear → enable) para que un timeout de software no lo deje
+    trabado.
+
 ## [0.1.6] - 2026-08-17
 
 ### Corregido

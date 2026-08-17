@@ -26,7 +26,9 @@ mejoras). Se actualiza en cada sesión; se marca `[x]` cuando el item está
 - [x] Fix 0.1.4: buffer del SSD1306 asignado en `OLEDbegin()` (segfault de memset(nullptr) al haber sensor en el bus)
 - [x] Fix 0.1.5: `drivers/I2C_bus` con write/read acotados por timeout para sensores (bcm2835 espera S_DONE sin límite → colgaba para siempre si el sensor se caía a mitad de transacción)
 - [x] Fix 0.1.6: OLED con writes acotados (`I2C_Write_Byte` → `I2C::write` 50 ms; `OLEDBuffer` aborta en el primer byte fallido). Verificado en la Pi: con 0.1.5 el OLED seguía colgando con el bus trabado
-- [ ] Pruebas con sensores **conectados de forma estable**: el AHT21B apareció 2 veces en 0x38 pero con contacto intermitente (desaparece del bus). Reseat del sensor, 3V3 (nunca 5V), capacitor 100 nF VDD-GND, cables cortos
+- [x] Fix 0.1.8: AHT21B `begin()` sondea el estado hasta no-busy; CRC tolerante (este módulo no lo calcula; valida rango físico RH 0-100 %, T -40..85 °C); `recover()` resetea el controlador BSC
+- [x] Fix 0.1.9: trigger del AHT21B con 500 ms (el sensor estira SCL ~80 ms durante la conversión; 100 ms fallaba intermitente)
+- [ ] Pruebas con sensores **conectados de forma estable**: el AHT21B **respondió con datos válidos** (RH≈78 %, T≈20 °C) pero vuelve a desaparecer del bus (contacto intermitente). Reseat del sensor, 3V3 (nunca 5V), capacitor 100 nF VDD-GND, cables cortos
 
 ## Mejoras (ROADMAP)
 

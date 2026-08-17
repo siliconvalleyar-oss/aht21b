@@ -12,9 +12,9 @@
 | Campo | Valor |
 |---|---|
 | Proyecto | AHT21B_bh1750 (temp/humedad + luz por I2C) |
-| Versión | 0.1.6 (v0.1.6) |
+| Versión | 0.2.0 (v0.2.0) |
 | Fecha | 2026-08-17 |
-| Estado global | ✅ Generación completa + compilación verificada + build remoto OK; fixes root (0.1.1), rebuild por VERSION (0.1.3), buffer OLED (0.1.4) y **I2C con timeout completo** (0.1.5 sensores + 0.1.6 OLED). Hardware: AHT21B apareció 2 veces en 0x38 pero con **contacto intermitente** (desaparece; revisar wiring) |
+| Estado global | ✅ Software completo y verificado (build remoto OK, sin colgadas). El AHT21B **sí lee datos válidos** (RH≈78 %, T≈20 °C vía kernel) pero sigue con **contacto intermitente**: aparece en 0x38 y desaparece. La app está lista para leer en cuanto el wiring sea estable (0.1.8: init/wait + CRC tolerante; 0.1.9: trigger con 500 ms por el SCL-stretch) |
 
 ## 2. Resumen
 
@@ -43,7 +43,9 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 - [x] Fix 0.1.5: módulo `drivers/I2C_bus` con write/read acotados por timeout (100 ms) para **sensores** (AHT21B/BH1750). bcm2835 espera S_DONE sin límite → la app se colgaba para siempre si un sensor se caía a mitad de transacción
 - [x] Fix 0.1.6: **el OLED también quedaba colgado** (verificado en la Pi: `OLEDinit()` con el bus trabado). `I2C_Write_Byte()` ahora usa el helper acotado (50 ms/intento) y `OLEDBuffer()` aborta en el primer byte fallido → la app ya no puede colgarse en ningún camino I2C
 - [x] Repo remoto configurado: `siliconvalleyar-oss/aht21b` público, tags v0.1.0..v0.1.4
-- [ ] Pruebas con sensores **conectados de forma estable** — el AHT21B apareció 2 veces en 0x38 pero con **contacto intermitente** (desaparece del bus; `i2cdetect` vuelve vacío). Revisar: reseat del sensor, 3V3 (nunca 5V), capacitor 100 nF VDD-GND, cables cortos. El software ya está verificado
+- [x] Fix 0.1.8: `begin()` sondea el estado hasta que el sensor deja de estar ocupado tras el init; **CRC no fatal** (este módulo no lo calcula bien; validan los rangos físicos); `recover()` resetea el controlador BSC
+- [x] Fix 0.1.9: trigger del AHT21B con timeout de **500 ms** (el sensor estira SCL durante la conversión ~80 ms; con 100 ms fallaba intermitente)
+- [ ] Pruebas con sensores **conectados de forma estable** — el AHT21B **sí respondió con datos válidos** (RH≈78 %, T≈20 °C, vía kernel/Python) pero vuelve a **desaparecer del bus** (contacto intermitente; `i2cdetect` vacío otra vez). Acción: reseat del sensor, verificar 3V3 (nunca 5V), capacitor 100 nF VDD-GND, cables cortos. La app (v0.1.9) está lista para leer
 
 ## 4. Registro de pruebas (completar)
 
@@ -62,3 +64,6 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 | 2026-08-17 | Build cruzado + remoto del fix 0.1.5 | ✅ exit 0 local (armhf) y remoto (Pi); `App v0.1.5` en la Pi | — |
 | 2026-08-17 | `sudo timeout 8 ./bin/App` (v0.1.5, sensor flaky) | ⚠️ **Siguió colgada**: el log muestra los NACK acotados de los sensores (`[i2c] write NACK (addr 0x23)` ✓) pero el write del **OLED** (`I2C_Write_Byte` → `bcm2835_i2c_write` sin timeout) quedó bloqueado con el bus trabado | Fix 0.1.6: `I2C_Write_Byte()` acotado (50 ms) + abort de `OLEDBuffer()` en el primer byte fallido |
 | 2026-08-17 | `sudo timeout 15 ./bin/App` (v0.1.6, bus muerto) | ✅ **Sin colgado**: EXIT=124 (timeout), el bucle corre (`loop=0` → `loop=2`), sin procesos residuales. Arranque lento con bus muerto (~7 s en `OLEDinit` acotado) y ~2.5 s/iteración (writes del OLED fallidos, acotados) | Con el wiring estable el arranque y el bucle vuelven a ser rápidos |
+| 2026-08-17 | AHT21B presente (0x38, status 0x18 calibrado) + sondeo kernel/Python | ✅ **Datos válidos y consistentes**: 10/10 paquetes RH≈78 %, T≈20 °C. **CRC siempre falla** en este módulo | 0.1.8: CRC tolerante (aviso) + rango físico como validación |
+| 2026-08-17 | `sudo timeout 15 ./bin/App` (v0.1.8, sensor presente) | ⚠️ init y status OK, pero el **trigger (0xAC) hacía timeout** (el sensor estira SCL durante la conversión ~80 ms; 100 ms quedaba al límite) | 0.1.9: trigger con 500 ms |
+| 2026-08-17 | Post-app: `i2cget` status + `i2cdetect` | ⚠️ **El sensor desapareció del bus otra vez** (NACK, i2cdetect vacío) — patrón de contacto intermitente | Reseat del sensor; cuando 0x38 sea estable, la app debe leer Temp/RH |
