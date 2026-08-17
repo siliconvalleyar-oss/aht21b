@@ -28,7 +28,7 @@ mejoras). Se actualiza en cada sesión; se marca `[x]` cuando el item está
 - [x] Fix 0.1.6: OLED con writes acotados (`I2C_Write_Byte` → `I2C::write` 50 ms; `OLEDBuffer` aborta en el primer byte fallido). Verificado en la Pi: con 0.1.5 el OLED seguía colgando con el bus trabado
 - [x] Fix 0.1.8: AHT21B `begin()` sondea el estado hasta no-busy; CRC tolerante (este módulo no lo calcula; valida rango físico RH 0-100 %, T -40..85 °C); `recover()` resetea el controlador BSC
 - [x] Fix 0.1.9: trigger del AHT21B con 500 ms (el sensor estira SCL ~80 ms durante la conversión; 100 ms fallaba intermitente)
-- [ ] Pruebas con sensores **conectados de forma estable**: el AHT21B **respondió con datos válidos** (RH≈78 %, T≈20 °C) pero vuelve a desaparecer del bus (contacto intermitente). Reseat del sensor, 3V3 (nunca 5V), capacitor 100 nF VDD-GND, cables cortos
+- [x] Pruebas con sensores **conectados de forma estable**: AHT21B estable en 0x38 → `sudo ./bin/App` lee `Temp 20.1 C / RH 76.6 %` (0.2.9). Pendiente: BH1750 (0x23) y OLED (0x3C) cuando se conecten
 
 ## Mejoras (ROADMAP)
 

@@ -12,9 +12,9 @@
 | Campo | Valor |
 |---|---|
 | Proyecto | AHT21B_bh1750 (temp/humedad + luz por I2C) |
-| Versión | 0.2.5 (v0.2.5) |
+| Versión | 0.2.9 (v0.2.9) |
 | Fecha | 2026-08-17 |
-| Estado global | ✅ Software completo y verificado (build remoto OK, sin colgadas) + unit tests (26 checks) + **auto-detección verificada en la Pi** + **resumen de dispositivos activos al arrancar** (0.2.4) + modo sin root limpio (0.2.5). El AHT21B sigue con **contacto intermitente** (aparece en 0x38 y desaparece) |
+| Estado global | ✅ **Primera lectura real del binario principal** con `sudo ./bin/App`: `Temp 20.1 C / RH 76.6 %` estables. El ejemplo (`examples/aht21b`) también lee (22.8 °C / 64.5 %). El AHT21B quedó conectado de forma estable en 0x38. BH1750 y OLED ausentes → deshabilitados por auto-detección |
 
 ## 2. Resumen
 
@@ -49,7 +49,7 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 - [x] **Auto-detección de dispositivos** (0.2.2): sondeo al arrancar de AHT21B/BH1750/OLED; solo se usan los que responden. El OLED se sondea con un write barato antes de inicializarlo (sin display, el arranque ya no tarda ~7 s)
 - [x] Verificación runtime en la Pi (0.2.2/0.2.3): con AHT21B/BH1750/OLED ausentes → 3 avisos `NO detectado`, bucle sin `no data`, arranque rápido, `Bye` limpio (3/3 runs, sin procesos residuales)
 - [x] Resumen de arranque (0.2.4): `[hw] Dispositivos activos: ...` lista lo detectado; sin root dice `ninguno (modo consola, sin I2C)` y el bucle ya no intenta leer (0.2.5)
-- [ ] Pruebas con sensores **conectados de forma estable** — el AHT21B **sí respondió con datos válidos** (RH≈78 %, T≈20 °C, vía kernel/Python) pero vuelve a **desaparecer del bus** (contacto intermitente; `i2cdetect` vacío otra vez). Acción: reseat del sensor, verificar 3V3 (nunca 5V), capacitor 100 nF VDD-GND, cables cortos. La app (v0.1.9) está lista para leer
+- [x] **Pruebas con sensores conectados**: AHT21B estable en 0x38 → `sudo ./bin/App` lee `Temp 20.1 C / RH 76.6 %` (primera lectura real, 0.2.8/0.2.9). El ejemplo `examples/aht21b` también lee (requiere `sudo`, como la app principal) — el AHT21B **sí respondió con datos válidos** (RH≈78 %, T≈20 °C, vía kernel/Python) pero vuelve a **desaparecer del bus** (contacto intermitente; `i2cdetect` vacío otra vez). Acción: reseat del sensor, verificar 3V3 (nunca 5V), capacitor 100 nF VDD-GND, cables cortos. La app (v0.1.9) está lista para leer
 
 ## 4. Registro de pruebas (completar)
 
@@ -75,3 +75,4 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 | 2026-08-17 | Auto-detección (0.2.2) | ✅ Implementada: `begin()` de cada driver sondea; los ausentes se deshabilitan (mensaje único por stderr) y no aparecen en la salida. El OLED se sondea con un write de 2 bytes antes de inicializarlo | Verificación runtime pendiente (con y sin dispositivos conectados) |
 | 2026-08-17 | Verificación runtime en la Pi (0.2.2/0.2.3, todo ausente) | ✅ `App v0.2.2`: 3 avisos `NO detectado - deshabilitado`, bucle solo con `loop=N` (sin `no data`), arranque rápido, `Bye` limpio. Shutdown estable: 3/3 runs exit 124 sin residuales (un one-off de shutdown sin reproducir; strace mostró exit limpio) | — |
 | 2026-08-17 | Resumen de arranque (0.2.4/0.2.5) en la Pi | ✅ Con root: `[hw] Dispositivos activos: ninguno` (todo ausente). Sin root: `ninguno (modo consola, sin I2C)` y bucle limpio sin `read error` (fix 0.2.5) | — |
+| 2026-08-17 | **Primera lectura real del binario principal** | ✅ `sudo ./bin/App` (0.2.8): AHT21B detectado (0x38), `Temp 20.11 C / RH 76.7 %` estables; BH1750/OLED ausentes deshabilitados; CRC mismatches tolerados (módulo conocido). EXIT=124 limpio | El binario principal necesita `sudo` (bcm2835 → /dev/mem), igual que el ejemplo necesita `sudo` para /dev/i2c-* |

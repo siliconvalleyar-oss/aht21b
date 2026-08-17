@@ -4,6 +4,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 La versión coincide siempre con el archivo `VERSION` y con el último tag
 (`vX.Y.Z`, ver `LEARNINGS.md`).
 
+## [0.2.9] - 2026-08-17
+
+### Verificado
+- **Primera lectura real del binario principal**: con el AHT21B estable en
+  0x38, `sudo ./bin/App` detecta el sensor y lee `Temp 20.1 C / RH 76.6 %`
+  estables (el binario principal necesita `sudo`: bcm2835 usa `/dev/mem`;
+  el ejemplo `examples/aht21b` también lee con `sudo`). BH1750 y OLED
+  ausentes → deshabilitados por auto-detección.
+
 ## [0.2.8] - 2026-08-17
 
 ### Añadido
