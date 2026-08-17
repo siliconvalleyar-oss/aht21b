@@ -1,5 +1,7 @@
 #include "engine/Device_t.hpp"
 
+#include "drivers/I2C_bus.hpp"
+
 #include <bcm2835.h>
 #include <SSD1306_OLED.hpp>
 
@@ -163,39 +165,68 @@ bool Device_t::initHardware() {
     bcm2835_i2c_begin();
     bcm2835_i2c_set_baudrate(i2cBaudrateHz_);
 
-    // Sensores: cada driver apunta el bus a su propia dirección antes de cada
-    // transacción, así que pueden compartir el mismo periférico I2C.
+    // Auto-detección: solo se usan los dispositivos que responden en el bus.
+    // begin() de cada driver ya sondea (comando + comprobación); si falla, se
+    // deshabilita el dispositivo y la app opera solo con los conectados.
     if (useAht21b_) {
-        aht21b_.begin();
+        if (aht21b_.begin()) {
+            std::printf("[hw] AHT21B detectado (0x%02X)\n", aht21bAddr_);
+        } else {
+            useAht21b_ = false;
+            std::fprintf(stderr, "[hw] AHT21B NO detectado (0x%02X) - deshabilitado\n",
+                         aht21bAddr_);
+        }
     }
     if (useBh1750_) {
-        bh1750_.begin();
+        if (bh1750_.begin()) {
+            std::printf("[hw] BH1750 detectado (0x%02X)\n", bh1750Addr_);
+        } else {
+            useBh1750_ = false;
+            std::fprintf(stderr, "[hw] BH1750 NO detectado (0x%02X) - deshabilitado\n",
+                         bh1750Addr_);
+        }
     }
 
-    // Display OLED opcional: si no responde (falta hardware o root), la app
-    // continúa en modo consola. Se usa la clase SSD1306 de Gavin Lyons.
+    // Display OLED opcional. Se sondea con un write barato antes de
+    // inicializarlo: un display ausente haría que OLEDbegin() quemara cientos
+    // de reintentos (varios segundos al arrancar) y que cada vuelta del bucle
+    // perdiera tiempo en OLEDupdate(). Sin ACK, se omite por completo.
     if (useOled_) {
-        oled_ = new SSD1306(kOledWidth, kOledHeight);
-        oled_->OLEDbegin(BCM2835_I2C_CLOCK_DIVIDER_626, oledAddr_);
-        oled_->OLEDclearBuffer();
-        oled_->setFontNum(OLEDFontType_Default);
-        oled_->setTextSize(1);
-        oled_->setTextColor(WHITE);
+        const uint8_t probe[2] = {0x00, 0xAE};  // control byte + DISPLAY_OFF
+        if (I2C::write(oledAddr_, probe, sizeof(probe), 20000)) {
+            oled_ = new SSD1306(kOledWidth, kOledHeight);
+            oled_->OLEDbegin(BCM2835_I2C_CLOCK_DIVIDER_626, oledAddr_);
+            oled_->OLEDclearBuffer();
+            oled_->setFontNum(OLEDFontType_Default);
+            oled_->setTextSize(1);
+            oled_->setTextColor(WHITE);
+            std::printf("[hw] OLED detectado (0x%02X)\n", oledAddr_);
+        } else {
+            useOled_ = false;
+            std::fprintf(stderr, "[hw] OLED NO detectado (0x%02X) - deshabilitado\n",
+                         oledAddr_);
+        }
     }
     return true;
 }
 
 void Device_t::printReadings() {
+    // Solo se muestran los dispositivos detectados al arrancar; un sensor
+    // ausente no aparece (ni se lee, ni gasta tiempo en el bus).
     std::printf("[%s] loop=%lu", timestamp().c_str(), loopCount_);
-    if (aht21bOk_) {
-        std::printf(" | Temp %.2f C | RH %.1f %%", temperatureC_, humidityPct_);
-    } else {
-        std::printf(" | AHT21B: no data");
+    if (useAht21b_) {
+        if (aht21bOk_) {
+            std::printf(" | Temp %.2f C | RH %.1f %%", temperatureC_, humidityPct_);
+        } else {
+            std::printf(" | AHT21B: read error");
+        }
     }
-    if (bh1750Ok_) {
-        std::printf(" | Lux %.1f", lux_);
-    } else {
-        std::printf(" | BH1750: no data");
+    if (useBh1750_) {
+        if (bh1750Ok_) {
+            std::printf(" | Lux %.1f", lux_);
+        } else {
+            std::printf(" | BH1750: read error");
+        }
     }
     std::printf("\n");
     std::fflush(stdout);
@@ -212,22 +243,26 @@ void Device_t::updateDisplay() {
     oled_->print(VERSION);
 
     oled_->setCursor(0, 8);
-    if (aht21bOk_) {
-        oled_->print("T:");
-        oled_->print(temperatureC_, 1);
-        oled_->print("C H:");
-        oled_->print(humidityPct_, 1);
-        oled_->print("%");
-    } else {
-        oled_->print("AHT21B: NO DATA");
+    if (useAht21b_) {
+        if (aht21bOk_) {
+            oled_->print("T:");
+            oled_->print(temperatureC_, 1);
+            oled_->print("C H:");
+            oled_->print(humidityPct_, 1);
+            oled_->print("%");
+        } else {
+            oled_->print("AHT21B: ERR");
+        }
     }
 
     oled_->setCursor(0, 16);
-    if (bh1750Ok_) {
-        oled_->print("Lux:");
-        oled_->print(lux_, 1);
-    } else {
-        oled_->print("BH1750: NO DATA");
+    if (useBh1750_) {
+        if (bh1750Ok_) {
+            oled_->print("Lux:");
+            oled_->print(lux_, 1);
+        } else {
+            oled_->print("BH1750: ERR");
+        }
     }
 
     oled_->setCursor(0, 24);
