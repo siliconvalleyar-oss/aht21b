@@ -1,5 +1,7 @@
 #include "drivers/AHT21B.hpp"
 
+#include "drivers/I2C_bus.hpp"
+
 #include <bcm2835.h>
 
 #include <cstdio>
@@ -32,12 +34,10 @@ bool AHT21B_t::begin() {
 }
 
 bool AHT21B_t::writeCommand(uint8_t c0, uint8_t c1, uint8_t c2) {
-    // Apunta el bus I2C de bcm2835 a la dirección del sensor y envía el
-    // comando de 3 bytes en una sola transacción.
-    bcm2835_i2c_setSlaveAddress(address_);
+    // Envía el comando de 3 bytes al sensor en una sola transacción (con
+    // timeout acotado: ver drivers/I2C_bus.hpp).
     const uint8_t cmd[3] = {c0, c1, c2};
-    // bcm2835_i2c_write() espera const char* (ver bcm2835.h v1.71).
-    return bcm2835_i2c_write(reinterpret_cast<const char*>(cmd), sizeof(cmd)) == 0;
+    return I2C::write(address_, cmd, sizeof(cmd));
 }
 
 bool AHT21B_t::read(float* temperatureC, float* humidityPct) {
@@ -53,9 +53,8 @@ bool AHT21B_t::read(float* temperatureC, float* humidityPct) {
     bcm2835_delay(kConversionDelayMs);
 
     // 2) Leer el paquete de 6 bytes.
-    bcm2835_i2c_setSlaveAddress(address_);
     uint8_t raw[kMeasurePacketBytes] = {0};
-    if (bcm2835_i2c_read(reinterpret_cast<char*>(raw), sizeof(raw)) != 0) {
+    if (!I2C::read(address_, raw, sizeof(raw))) {
         std::fprintf(stderr, "[AHT21B] read failed on the bus\n");
         return false;
     }

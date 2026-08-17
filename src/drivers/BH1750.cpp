@@ -1,6 +1,6 @@
 #include "drivers/BH1750.hpp"
 
-#include <bcm2835.h>
+#include "drivers/I2C_bus.hpp"
 
 #include <cstdio>
 
@@ -20,11 +20,9 @@ constexpr uint32_t kMaxConversionMs = 180;
 BH1750_t::BH1750_t(uint8_t busAddress) : address_(busAddress) {}
 
 bool BH1750_t::writeCommand(uint8_t cmd) {
-    // Apunta el bus I2C de bcm2835 a la dirección del sensor y envía el
-    // comando de 1 byte.
-    bcm2835_i2c_setSlaveAddress(address_);
-    // bcm2835_i2c_write() espera const char* (ver bcm2835.h v1.71).
-    return bcm2835_i2c_write(reinterpret_cast<const char*>(&cmd), 1) == 0;
+    // Envía el comando de 1 byte al sensor (con timeout acotado: ver
+    // drivers/I2C_bus.hpp).
+    return I2C::write(address_, &cmd, 1);
 }
 
 bool BH1750_t::begin() {
@@ -45,9 +43,8 @@ bool BH1750_t::read(float* lux) {
 
     // En modo continuo el sensor empuja el resultado sin comando previo:
     // basta con leer los 2 bytes del registro de datos.
-    bcm2835_i2c_setSlaveAddress(address_);
     uint8_t raw[2] = {0};
-    if (bcm2835_i2c_read(reinterpret_cast<char*>(raw), sizeof(raw)) != 0) {
+    if (!I2C::read(address_, raw, sizeof(raw))) {
         std::fprintf(stderr, "[BH1750] read failed on the bus\n");
         return false;
     }
