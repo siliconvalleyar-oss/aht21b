@@ -4,6 +4,42 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 La versión coincide siempre con el archivo `VERSION` y con el último tag
 (`vX.Y.Z`, ver `LEARNINGS.md`).
 
+## [0.1.5] - 2026-08-17
+
+### Corregido
+- **La app ya no se cuelga si un sensor se cae a mitad de una transacción
+  I2C**: `bcm2835_i2c_write()`/`read()` esperan el bit S_DONE en un bucle sin
+  timeout; si el esclavo desaparece del bus (contacto intermitente) el
+  controlador nunca llega a DONE y la app queda bloqueada para siempre (ni
+  SIGTERM la detiene). Nuevo módulo `drivers/I2C_bus` que replica la lógica
+  con un plazo máximo de 100 ms y deja el controlador en estado limpio ante
+  NACK, clock-stretch o timeout. AHT21B y BH1750 lo usan.
+
+## [0.1.4] - 2026-08-17
+
+### Corregido
+- **Segfault en el display SSD1306**: la librería vendorizada nunca asignaba
+  el framebuffer; `OLEDclearBuffer()` hacía `memset` sobre un puntero nulo.
+  Solo apareció al conectar un sensor (con el bus vacío, los reintentos I2C
+  de `OLEDbegin()` alargaban el arranque y el timeout mataba la app antes de
+  llegar al memset). Ahora `OLEDbegin()` reserva el buffer con `malloc` y el
+  destructor lo libera.
+
+## [0.1.3] - 2026-08-17
+
+### Corregido
+- **`make run` ejecutaba un binario viejo**: `VERSION` no era dependencia del
+  build, así que al bumpear la versión `make` no recompilaba y corría el
+  binario anterior (el que crasheaba sin root). Ahora `VERSION` es
+  prerequisito de cada objeto y cualquier bump fuerza la recompilación con el
+  nuevo `-DVERSION`.
+
+## [0.1.2] - 2026-08-17
+
+### Documentado
+- Verificación remota en la Pi (build, `--version`, runtime sin/con root,
+  `i2cdetect` con el bus vacío) registrada en REPORT/TODO/ACTIVITY.
+
 ## [0.1.1] - 2026-08-17
 
 ### Corregido

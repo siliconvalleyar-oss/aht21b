@@ -12,9 +12,9 @@
 | Campo | Valor |
 |---|---|
 | Proyecto | AHT21B_bh1750 (temp/humedad + luz por I2C) |
-| Versión | 0.1.1 (v0.1.1) |
+| Versión | 0.1.5 (v0.1.5) |
 | Fecha | 2026-08-17 |
-| Estado global | ✅ Generación completa + compilación verificada + build remoto OK; **hardware no conectado** (bus I2C vacío) |
+| Estado global | ✅ Generación completa + compilación verificada + build remoto OK; fix root (0.1.1), rebuild por VERSION (0.1.3), buffer OLED (0.1.4) y **I2C con timeout** (0.1.5). Hardware: AHT21B apareció 2 veces en 0x38 pero con **contacto intermitente** (desaparece; revisar wiring) |
 
 ## 2. Resumen
 
@@ -38,8 +38,11 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 - [x] Compilación verificada (build cruzado armhf GCC 10 + sysroot; `bin/App` ELF 32-bit ARM, requiere GLIBC_2.4/GLIBCXX_3.4.21)
 - [x] Build remoto en la Pi (`make clean && make -j4`) exitoso; `./bin/App --version` → v0.1.1
 - [x] Fix root/I2C: sin root (joy) → modo consola sin crash; con sudo → I2C inicializa y el bucle corre sin crash
-- [x] Repo remoto configurado: `siliconvalleyar-oss/aht21b` público, tags v0.1.0 y v0.1.1
-- [ ] Pruebas con sensores **conectados** — pendiente: `i2cdetect` no detecta ningún dispositivo (bus vacío; revisar wiring/3V3)
+- [x] Fix 0.1.3: `VERSION` como prerequisito del build (bump fuerza recompilación; `make run` ya no corre binarios viejos)
+- [x] Fix 0.1.4: buffer del SSD1306 asignado en `OLEDbegin()` (elimina el segfault de `memset(nullptr)` al haber sensor en el bus)
+- [x] Fix 0.1.5: módulo `drivers/I2C_bus` con write/read acotados por timeout (100 ms). bcm2835 espera S_DONE sin límite → la app se colgaba para siempre si un sensor se caía a mitad de transacción (verificado en la Pi: quedó un proceso vivo que ni `timeout` mató)
+- [x] Repo remoto configurado: `siliconvalleyar-oss/aht21b` público, tags v0.1.0..v0.1.4
+- [ ] Pruebas con sensores **conectados de forma estable** — el AHT21B apareció 2 veces en 0x38 pero con **contacto intermitente** (desaparece del bus; `i2cdetect` vuelve vacío). Revisar: reseat del sensor, 3V3 (nunca 5V), capacitor 100 nF VDD-GND, cables cortos. El software ya está verificado
 
 ## 4. Registro de pruebas (completar)
 
@@ -52,3 +55,7 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 | 2026-08-17 | `./bin/App --version` en la Pi | ✅ `App v0.1.1` | — |
 | 2026-08-17 | `./bin/App` con sudo (6 s, bucle completo) | ✅ exit 124 (timeout esperado), sin crash; NACK correctos | — |
 | 2026-08-17 | `i2cdetect -y 1` y `-y 0` | ❌ **Ningún dispositivo en el bus** (0x23, 0x38, 0x3C ausentes) | Conectar sensores + OLED a GPIO 2/3 (SDA/SCL) y 3V3/GND |
+| 2026-08-17 | `i2cdetect -y 1` con AHT21B conectado | ⚠️ 0x38 apareció una vez, luego el bus quedó vacío e intermitente (0/10 respuestas) | **Contacto intermitente**: reseat del sensor, verificar 3V3/GND y capacitor 100 nF |
+| 2026-08-17 | `sudo ./bin/App` con sensor presente (v0.1.3) | ❌ **Segfault (exit 139)** en `memset()` de `OLEDclearBuffer()` (buffer nullptr) | Fix 0.1.4: malloc del framebuffer en `OLEDbegin()` |
+| 2026-08-17 | `sudo timeout 6 ./bin/App` (v0.1.4, sensor flaky) | ⚠️ **La app quedó colgada para siempre**: bcm2835 espera S_DONE sin timeout; el proceso siguió vivo y ni SIGTERM lo detuvo (hubo que `pkill -9`) | Fix 0.1.5: `drivers/I2C_bus` con write/read acotados (100 ms) |
+| 2026-08-17 | Build cruzado + remoto del fix 0.1.5 | ✅ exit 0 local (armhf) y remoto (Pi); `App v0.1.4` en la Pi | Verificación runtime con sensor estable pendiente |
