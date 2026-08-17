@@ -111,7 +111,7 @@ class SSD1306 : public SSD1306_graphics  {
 
   private:
 
-	void I2C_Write_Byte(uint8_t value, uint8_t Cmd);
+	bool I2C_Write_Byte(uint8_t value, uint8_t Cmd);
 	void OLED_I2C_OFF(void);
 	void OLED_I2C_ON(void);
 	uint16_t _I2C_speed = 0 ;

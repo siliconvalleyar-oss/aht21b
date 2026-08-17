@@ -5,6 +5,9 @@
 */
 
 #include "SSD1306_OLED.hpp"
+
+#include "drivers/I2C_bus.hpp"
+
 #include <stdbool.h>
 
 SSD1306  :: SSD1306(int16_t oledwidth, int16_t oledheight) :SSD1306_graphics(oledwidth, oledheight)
@@ -241,23 +244,29 @@ for (int16_t j = 0; j < h; j++, y++)
 // Desc Writes a byte to I2C address,command or data, used internally
 // In the event of an error will loop 3 times each time.
 // Printing the error code , see bcm2835I2CReasonCodes in bcm2835 docs.
-void SSD1306::I2C_Write_Byte(uint8_t value, uint8_t Cmd)
+bool SSD1306::I2C_Write_Byte(uint8_t value, uint8_t Cmd)
 {
-	char buf[2] = {Cmd,value};
+	uint8_t buf[2] = {Cmd,value};
 	uint8_t attemptI2Cwrite = 0;
 	uint8_t returnCode = 0;
 	
-	returnCode = bcm2835_i2c_write(buf, 2); 
+	// The stock library calls bcm2835_i2c_write(), which waits for the BSC
+	// S_DONE bit without a timeout: if the bus is stuck (e.g. a flaky slave
+	// holds a line) the app would hang forever. Use the bounded write from
+	// drivers/I2C_bus instead (50 ms per attempt, longer than the hardware
+	// clock-stretch timeout so the controller finishes/aborts first).
+	returnCode = I2C::write(_I2C_address, buf, 2, 50000) ? 0 : 1;
 	
 	while(returnCode != 0)
 	{ // failure to write I2C byte 
 		attemptI2Cwrite ++;
 		printf("Error I2C: Cannot Write byte :: %u\n", attemptI2Cwrite);
 		printf("bcm2835I2CReasonCodes :: Error code %u\n", returnCode);
-		returnCode  = bcm2835_i2c_write(buf, 2);
+		returnCode = I2C::write(_I2C_address, buf, 2, 50000) ? 0 : 1;
 		bcm2835_delay(100); //mS
 		if (attemptI2Cwrite >= 3) break;
 	}
+	return returnCode == 0;
 }
 
 //Desc: updates the buffer i.e. writes it to the screen
@@ -310,7 +319,14 @@ void SSD1306::OLEDBuffer(int16_t x, int16_t y, uint8_t w, uint8_t h, uint8_t* da
 
 			if (x + tx < 0 || x + tx >= _OLED_WIDTH) {continue;}
 			offset = (w * (ty /8)) + tx;
-			SSD1306_data(data[offset++]);
+			// Si el bus no responde, no tiene sentido escribir el resto del
+			// buffer: se aborta la transferencia (el OLED es opcional y la app
+			// sigue en modo consola).
+			if (!I2C_Write_Byte(data[offset], SSD1306_DATA_CONTINUE))
+			{
+				OLED_I2C_OFF();
+				return;
+			}
 		}
 	}
 	OLED_I2C_OFF();
