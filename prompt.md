@@ -1,5 +1,5 @@
-INSTRUCCIONES COMPLETAS PARA EL ASISTENTE (PROMPT ÚNICO)
-========================================================
+INSTRUCCIONES COMPLETAS PARA EL ASISTENTE (PROMPT ÚNICO Y DEFINITIVO)
+========================================================================
 
 Debes generar un proyecto C++ completo para Raspberry Pi (compatible con 32 y 64 bits) que use la librería bcm2835, siguiendo la estructura de carpetas y archivos que se detalla abajo. El proyecto debe ser autocontenido, compilable con make, y debe incluir todo el código fuente, cabeceras, scripts de instalación, documentación y archivos de configuración.
 
@@ -56,7 +56,7 @@ ESTRUCTURA OBLIGATORIA (crear todos los directorios y archivos)
 │   │   └── SSD1306_OLED_Print.hpp
 │   └── security/                     # cabeceras de seguridad (vacío)
 ├── LICENSE                           # licencia (ej. MIT)
-├── Makefile                          # archivo de compilación
+├── Makefile                          # archivo de compilación (debe definir VERSION)
 ├── obj/                              # directorio para objetos (se creará durante la compilación)
 ├── README.md                         # DEBES COMPLETARLO
 ├── scripts/
@@ -69,7 +69,7 @@ ESTRUCTURA OBLIGATORIA (crear todos los directorios y archivos)
 │       ├── SSD1306_OLED_font.cpp
 │       ├── SSD1306_OLED_graphics.cpp
 │       └── SSD1306_OLED_Print.cpp
-└── VERSION                           # versión (ej. 0.1.0)
+└── VERSION                           # archivo con el número de versión (ej. 0.1.0)
 
 
 REQUISITOS FUNCIONALES DEL CÓDIGO
@@ -91,10 +91,19 @@ REQUISITOS FUNCIONALES DEL CÓDIGO
 - La clase Device_t debe tener un método run() que contenga la lógica principal (puede ser un bucle simple, encender un LED, leer un sensor, etc.) y que demuestre el uso de bcm2835.
 - No uses new/delete explícitos; la memoria se libera automáticamente al salir del main gracias al unique_ptr.
 
+VERSIÓN DE LA APLICACIÓN (EN TIEMPO DE COMPILACIÓN)
+---------------------------------------------------
+- La versión de la aplicación NO se lee del archivo VERSION en tiempo de ejecución, sino que se define como una macro en tiempo de compilación.
+- El Makefile debe pasar la versión al compilador usando -DVERSION="$(VERSION)" (o similar), leyendo el número del archivo VERSION.
+- En el código (por ejemplo, en Device_t o en main), se debe mostrar la versión al iniciar la aplicación (por ejemplo, imprimiendo por consola: "App v1.2.3").
+- Además, se debe soportar un argumento de línea de comandos (por ejemplo, --version) que muestre la versión y termine la ejecución.
+- Todo el código debe estar completamente documentado con comentarios (explicando qué hace cada función, clase, y partes importantes).
+
 SCRIPTS Y MAKEFILE
 ------------------
 - scripts/install_deps.sh: Debe instalar bcm2835 (descargando y compilando desde el sitio oficial o usando apt) y cualquier otra dependencia (g++, make, etc.). Debe funcionar en Raspberry Pi de 32 y 64 bits.
 - Makefile:
+  * Debe leer la versión del archivo VERSION (ej. con $(shell cat VERSION)) y pasarla como -DVERSION="..." a todos los objetos.
   * Compila todos los .cpp de src/ y sus subdirectorios, generando los .o en obj/ manteniendo la jerarquía (ej. obj/src/main.o, obj/src/oled/SSD1306_OLED.o).
   * El binario final se llama "App" y se coloca en bin/.
   * Enlaza con la librería bcm2835 (opciones -lbcm2835).
@@ -112,6 +121,7 @@ DOCUMENTACIÓN (archivos .md)
   * Instrucciones de compilación e instalación (usando make y el script de dependencias).
   * Indicación explícita de que la aplicación es compatible con Raspberry Pi de 32 bits y 64 bits.
   * Un ejemplo básico de uso.
+  * Mención de que la versión se muestra al inicio y con --version.
 
 CONTENIDO ADICIONAL
 -------------------
@@ -119,8 +129,18 @@ CONTENIDO ADICIONAL
 - HMC5883L.hpp debe declarar una clase para el magnetómetro (puede ser un esqueleto con métodos vacíos).
 - El archivo VERSION debe contener un número de versión (ej. 0.1.0).
 
+COMENTARIOS Y DOCUMENTACIÓN DEL CÓDIGO
+--------------------------------------
+- Todo el código fuente (archivos .cpp y .hpp) debe estar ampliamente comentado en español o inglés (consistente), explicando:
+  * El propósito de cada clase, método y función.
+  * Los parámetros y retornos.
+  * La lógica importante.
+  * Las decisiones de diseño.
+- También se deben incluir comentarios de tipo Doxygen (si se desea) para facilitar la generación de documentación.
+- El código debe ser legible y seguir buenas prácticas de programación (nombres descriptivos, const-correctness, etc.).
+
 ENTREGABLE FINAL
 ----------------
 El asistente debe generar todos los archivos y carpetas con el contenido adecuado. El código debe compilar sin errores en una Raspberry Pi (simulado o real) usando make. La documentación debe estar completa y bien redactada. Todo debe ser funcional, coherente y seguir las especificaciones dadas.
 
-NOTA: Este prompt contiene todas las instrucciones previas fusionadas. Ejecuta cada paso y genera el proyecto completo.
+NOTA: Este prompt contiene todas las instrucciones previas fusionadas, incluyendo la gestión de versión en tiempo de compilación y la documentación exhaustiva del código. Ejecuta cada paso y genera el proyecto completo.
