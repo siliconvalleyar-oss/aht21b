@@ -4,16 +4,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 La versión coincide siempre con el archivo `VERSION` y con el último tag
 (`vX.Y.Z`, ver `LEARNINGS.md`).
 
+## [0.1.6] - 2026-08-17
+
+### Corregido
+- **Completa el fix 0.1.5 en el OLED**: aunque los sensores ya usaban
+  transacciones acotadas, la librería SSD1306 seguía escribiendo con
+  `bcm2835_i2c_write()` (sin timeout). Verificado en la Pi: con el bus
+  trabado por el sensor flaky, `OLEDinit()` quedaba colgado para siempre.
+  Ahora `I2C_Write_Byte()` usa el helper acotado (50 ms por intento) y
+  `OLEDBuffer()` aborta la transferencia en el primer byte fallido (el OLED
+  es opcional; la app sigue en modo consola).
+
 ## [0.1.5] - 2026-08-17
 
 ### Corregido
-- **La app ya no se cuelga si un sensor se cae a mitad de una transacción
-  I2C**: `bcm2835_i2c_write()`/`read()` esperan el bit S_DONE en un bucle sin
-  timeout; si el esclavo desaparece del bus (contacto intermitente) el
-  controlador nunca llega a DONE y la app queda bloqueada para siempre (ni
-  SIGTERM la detiene). Nuevo módulo `drivers/I2C_bus` que replica la lógica
-  con un plazo máximo de 100 ms y deja el controlador en estado limpio ante
-  NACK, clock-stretch o timeout. AHT21B y BH1750 lo usan.
+- **Sensores AHT21B/BH1750: la app ya no se cuelga si un esclavo se cae a
+  mitad de una transacción I2C**: `bcm2835_i2c_write()`/`read()` esperan el
+  bit S_DONE en un bucle sin timeout; si el esclavo desaparece del bus
+  (contacto intermitente) el controlador nunca llega a DONE y la app queda
+  bloqueada para siempre (ni SIGTERM la detiene). Nuevo módulo
+  `drivers/I2C_bus` que replica la lógica con un plazo máximo de 100 ms y
+  deja el controlador en estado limpio ante NACK, clock-stretch o timeout.
+  *(Nota: el camino del OLED quedó pendiente y se completó en 0.1.6.)*
 
 ## [0.1.4] - 2026-08-17
 

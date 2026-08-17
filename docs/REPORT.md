@@ -12,9 +12,9 @@
 | Campo | Valor |
 |---|---|
 | Proyecto | AHT21B_bh1750 (temp/humedad + luz por I2C) |
-| Versión | 0.1.5 (v0.1.5) |
+| Versión | 0.1.6 (v0.1.6) |
 | Fecha | 2026-08-17 |
-| Estado global | ✅ Generación completa + compilación verificada + build remoto OK; fix root (0.1.1), rebuild por VERSION (0.1.3), buffer OLED (0.1.4) y **I2C con timeout** (0.1.5). Hardware: AHT21B apareció 2 veces en 0x38 pero con **contacto intermitente** (desaparece; revisar wiring) |
+| Estado global | ✅ Generación completa + compilación verificada + build remoto OK; fixes root (0.1.1), rebuild por VERSION (0.1.3), buffer OLED (0.1.4) y **I2C con timeout completo** (0.1.5 sensores + 0.1.6 OLED). Hardware: AHT21B apareció 2 veces en 0x38 pero con **contacto intermitente** (desaparece; revisar wiring) |
 
 ## 2. Resumen
 
@@ -40,7 +40,8 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 - [x] Fix root/I2C: sin root (joy) → modo consola sin crash; con sudo → I2C inicializa y el bucle corre sin crash
 - [x] Fix 0.1.3: `VERSION` como prerequisito del build (bump fuerza recompilación; `make run` ya no corre binarios viejos)
 - [x] Fix 0.1.4: buffer del SSD1306 asignado en `OLEDbegin()` (elimina el segfault de `memset(nullptr)` al haber sensor en el bus)
-- [x] Fix 0.1.5: módulo `drivers/I2C_bus` con write/read acotados por timeout (100 ms). bcm2835 espera S_DONE sin límite → la app se colgaba para siempre si un sensor se caía a mitad de transacción (verificado en la Pi: quedó un proceso vivo que ni `timeout` mató)
+- [x] Fix 0.1.5: módulo `drivers/I2C_bus` con write/read acotados por timeout (100 ms) para **sensores** (AHT21B/BH1750). bcm2835 espera S_DONE sin límite → la app se colgaba para siempre si un sensor se caía a mitad de transacción
+- [x] Fix 0.1.6: **el OLED también quedaba colgado** (verificado en la Pi: `OLEDinit()` con el bus trabado). `I2C_Write_Byte()` ahora usa el helper acotado (50 ms/intento) y `OLEDBuffer()` aborta en el primer byte fallido → la app ya no puede colgarse en ningún camino I2C
 - [x] Repo remoto configurado: `siliconvalleyar-oss/aht21b` público, tags v0.1.0..v0.1.4
 - [ ] Pruebas con sensores **conectados de forma estable** — el AHT21B apareció 2 veces en 0x38 pero con **contacto intermitente** (desaparece del bus; `i2cdetect` vuelve vacío). Revisar: reseat del sensor, 3V3 (nunca 5V), capacitor 100 nF VDD-GND, cables cortos. El software ya está verificado
 
@@ -58,4 +59,5 @@ JSON y OLED opcional, versión en tiempo de compilación, Makefile, scripts y
 | 2026-08-17 | `i2cdetect -y 1` con AHT21B conectado | ⚠️ 0x38 apareció una vez, luego el bus quedó vacío e intermitente (0/10 respuestas) | **Contacto intermitente**: reseat del sensor, verificar 3V3/GND y capacitor 100 nF |
 | 2026-08-17 | `sudo ./bin/App` con sensor presente (v0.1.3) | ❌ **Segfault (exit 139)** en `memset()` de `OLEDclearBuffer()` (buffer nullptr) | Fix 0.1.4: malloc del framebuffer en `OLEDbegin()` |
 | 2026-08-17 | `sudo timeout 6 ./bin/App` (v0.1.4, sensor flaky) | ⚠️ **La app quedó colgada para siempre**: bcm2835 espera S_DONE sin timeout; el proceso siguió vivo y ni SIGTERM lo detuvo (hubo que `pkill -9`) | Fix 0.1.5: `drivers/I2C_bus` con write/read acotados (100 ms) |
-| 2026-08-17 | Build cruzado + remoto del fix 0.1.5 | ✅ exit 0 local (armhf) y remoto (Pi); `App v0.1.4` en la Pi | Verificación runtime con sensor estable pendiente |
+| 2026-08-17 | Build cruzado + remoto del fix 0.1.5 | ✅ exit 0 local (armhf) y remoto (Pi); `App v0.1.5` en la Pi | — |
+| 2026-08-17 | `sudo timeout 8 ./bin/App` (v0.1.5, sensor flaky) | ⚠️ **Siguió colgada**: el log muestra los NACK acotados de los sensores (`[i2c] write NACK (addr 0x23)` ✓) pero el write del **OLED** (`I2C_Write_Byte` → `bcm2835_i2c_write` sin timeout) quedó bloqueado con el bus trabado | Fix 0.1.6: `I2C_Write_Byte()` acotado (50 ms) + abort de `OLEDBuffer()` en el primer byte fallido |
