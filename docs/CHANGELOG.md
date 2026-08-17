@@ -4,6 +4,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 La versión coincide siempre con el archivo `VERSION` y con el último tag
 (`vX.Y.Z`, ver `LEARNINGS.md`).
 
+## [0.2.5] - 2026-08-17
+
+### Corregido
+- **Modo sin root**: al no haber I2C no hay dispositivos; se limpian los flags
+  de sensores/OLED para que el bucle no intente leerlos (ya no aparecen
+  `read error` en consola).
+
+## [0.2.4] - 2026-08-17
+
+### Añadido
+- **Resumen de arranque**: la app lista los dispositivos que la auto-detección
+  dejó activos, p. ej. `[hw] Dispositivos activos: AHT21B (0x38)`; sin I2C
+  dice `ninguno (modo consola, sin I2C)`.
+
 ## [0.2.2] - 2026-08-17
 
 ### Añadido
