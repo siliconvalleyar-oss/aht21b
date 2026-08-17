@@ -34,6 +34,6 @@ mejoras). Se actualiza en cada sesión; se marca `[x]` cuando el item está
 
 - [ ] Implementar HMC5883L (begin/read de 3 ejes)
 - [ ] Ejemplos independientes en `examples/`
-- [ ] Unit tests de decodificación sin hardware
+- [x] Unit tests de decodificación sin hardware (`make test`: CRC-8 AHT21B, 20-bit RH/T, lux BH1750 — 26 checks)
 - [ ] Salida CSV/JSON e histórico
 - [ ] Exposición BLE/MQTT (opcional)

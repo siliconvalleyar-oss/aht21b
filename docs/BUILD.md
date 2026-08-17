@@ -25,7 +25,23 @@ jerarquía de `src/` (ej. `src/engine/Device_t.cpp` → `obj/engine/Device_t.o`)
 | `make install` | Copia `bin/App` a `/usr/local/bin` (`DESTDIR` soportado) |
 | `make clean` | Borra `obj/` |
 | `make distclean` | Borra `obj/` y `bin/` |
+| `make test` | Compila y corre los unit tests de decodificación (sin hardware) |
 | `make help` | Muestra ayuda y la versión inyectada |
+
+## Tests (sin hardware)
+
+`make test` compila `tests/test_decode.cpp` con el compilador del host
+(`TEST_CXX`, por defecto `g++`) y lo ejecuta. Solo usa funciones puras de
+`AHT21B_decode.hpp` y de `BH1750.hpp` (CRC-8, decodificación 20-bit, lux),
+así que **no requiere bcm2835 ni sensores conectados**:
+
+```bash
+make test
+# tests: 26 checks, 0 failures
+```
+
+> En builds cruzados el target `test` usa `g++` del host por defecto; para
+> cambiarlo: `make test TEST_CXX=<otro-compilador>`.
 
 ## Versión en tiempo de compilación
 

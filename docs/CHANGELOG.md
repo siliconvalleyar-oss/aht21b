@@ -4,6 +4,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 La versión coincide siempre con el archivo `VERSION` y con el último tag
 (`vX.Y.Z`, ver `LEARNINGS.md`).
 
+## [0.2.1] - 2026-08-17
+
+### Añadido
+- **Unit tests de decodificación sin hardware** (`make test`): CRC-8 del
+  AHT21B (vectores verificados con dos implementaciones independientes,
+  incluido el check clásico de "123456789" = 0xF7), decodificación de los
+  valores de 20 bits (RH/T) con casos de borde y fuera de rango, y conversión
+  de lux del BH1750 (÷1.2).
+
+### Refactor
+- La decodificación pura del AHT21B (CRC-8 y 20-bit) se extrajo a
+  `include/drivers/AHT21B_decode.hpp` (funciones inline, sin bcm2835) para
+  poder testearla; el driver la usa. El BH1750 expone `luxFromRaw`/
+  `luxFromBytes` con el mismo fin.
+
 ## [0.1.9] - 2026-08-17
 
 ### Corregido
