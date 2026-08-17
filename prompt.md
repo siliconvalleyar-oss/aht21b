@@ -99,9 +99,32 @@ VERSIÓN DE LA APLICACIÓN (EN TIEMPO DE COMPILACIÓN)
 - Además, se debe soportar un argumento de línea de comandos (por ejemplo, --version) que muestre la versión y termine la ejecución.
 - Todo el código debe estar completamente documentado con comentarios (explicando qué hace cada función, clase, y partes importantes).
 
+CREACIÓN DEL REPOSITORIO GIT (DESDE SHELL CONSOLA)
+---------------------------------------------------
+El proceso de generación del proyecto debe incluir la creación de un repositorio Git. Para ello, el script o el asistente debe interactuar con el usuario y preguntar:
+
+    - Nombre de usuario en la plataforma (GitHub, GitLab, etc.).
+    - Credenciales (token de acceso o pedir que ya estén configuradas globalmente).
+    - Nombre del repositorio (que coincidirá con el nombre del proyecto).
+    - Visibilidad: público o privado.
+
+Con estos datos, el sistema debe ejecutar los siguientes comandos desde la shell (por ejemplo, al final del script de generación):
+
+    1. git init
+    2. git add .
+    3. git commit -m "Initial commit"
+    4. gh repo create <nombre> --public (o --private) --source=. --remote=origin --push
+       (si se usa GitHub CLI) o alternativamente:
+       - Crear el repositorio vía API (curl) y luego añadir el remote.
+    5. git push -u origin main (o master)
+
+Si no se dispone de GitHub CLI, se debe proporcionar instrucciones claras para que el usuario cree el repositorio manualmente y luego ejecute los comandos git remote add y git push. El asistente debe generar un script (por ejemplo, setup_git.sh) que automatice todo el proceso y que pueda ejecutarse después de la generación de archivos.
+
+El script debe verificar si gh está instalado; si no, debe ofrecer la opción de crear el repositorio localmente y mostrar los pasos para el remoto.
+
 SCRIPTS Y MAKEFILE
 ------------------
-- scripts/install_deps.sh: Debe instalar bcm2835 (descargando y compilando desde el sitio oficial o usando apt) y cualquier otra dependencia (g++, make, etc.). Debe funcionar en Raspberry Pi de 32 y 64 bits.
+- scripts/install_deps.sh: Debe instalar bcm2835 (descargando y compilando desde el sitio oficial o usando apt) y cualquier otra dependencia (g++, make, git, etc.). Debe funcionar en Raspberry Pi de 32 y 64 bits.
 - Makefile:
   * Debe leer la versión del archivo VERSION (ej. con $(shell cat VERSION)) y pasarla como -DVERSION="..." a todos los objetos.
   * Compila todos los .cpp de src/ y sus subdirectorios, generando los .o en obj/ manteniendo la jerarquía (ej. obj/src/main.o, obj/src/oled/SSD1306_OLED.o).
@@ -110,6 +133,7 @@ SCRIPTS Y MAKEFILE
   * Debe soportar ambas arquitecturas (32 y 64 bits) mediante flags condicionales o detección automática.
   * Incluye objetivos: all, clean, distclean, install (opcional).
 - generate_basic_src.sh: puede ser un script auxiliar para generar archivos fuente (opcional, puede estar vacío).
+- setup_git.sh: script que pregunta interactivamente los datos y configura el repositorio Git.
 
 DOCUMENTACIÓN (archivos .md)
 ----------------------------
@@ -117,11 +141,12 @@ DOCUMENTACIÓN (archivos .md)
 - Completa TODOS los archivos .md de docs/ con descripciones coherentes y apropiadas para cada tema (API, arquitectura, instalación, uso, etc.). No dejes ninguno vacío.
 - README.md debe incluir:
   * Nombre del proyecto y descripción general.
-  * Requisitos (Raspberry Pi, bcm2835).
+  * Requisitos (Raspberry Pi, bcm2835, Git, gh opcional).
   * Instrucciones de compilación e instalación (usando make y el script de dependencias).
   * Indicación explícita de que la aplicación es compatible con Raspberry Pi de 32 bits y 64 bits.
   * Un ejemplo básico de uso.
   * Mención de que la versión se muestra al inicio y con --version.
+  * Instrucciones para configurar el repositorio Git (ejecutar setup_git.sh o los pasos manuales).
 
 CONTENIDO ADICIONAL
 -------------------
@@ -141,6 +166,6 @@ COMENTARIOS Y DOCUMENTACIÓN DEL CÓDIGO
 
 ENTREGABLE FINAL
 ----------------
-El asistente debe generar todos los archivos y carpetas con el contenido adecuado. El código debe compilar sin errores en una Raspberry Pi (simulado o real) usando make. La documentación debe estar completa y bien redactada. Todo debe ser funcional, coherente y seguir las especificaciones dadas.
+El asistente debe generar todos los archivos y carpetas con el contenido adecuado. El código debe compilar sin errores en una Raspberry Pi (simulado o real) usando make. La documentación debe estar completa y bien redactada. Todo debe ser funcional, coherente y seguir las especificaciones dadas, incluyendo la configuración del repositorio Git mediante interacción con el usuario.
 
-NOTA: Este prompt contiene todas las instrucciones previas fusionadas, incluyendo la gestión de versión en tiempo de compilación y la documentación exhaustiva del código. Ejecuta cada paso y genera el proyecto completo.
+NOTA: Este prompt contiene todas las instrucciones previas fusionadas, incluyendo la gestión de versión en tiempo de compilación, la documentación exhaustiva del código y la creación del repositorio Git con preguntas interactivas. Ejecuta cada paso y genera el proyecto completo.
