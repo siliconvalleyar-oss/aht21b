@@ -106,9 +106,11 @@ $(TEST_BIN): $(TEST_SRC) | $(BIN_DIR)
 
 # ---- Convenience ------------------------------------------------------------
 
-# Run the app; pass extra args with ARGS="--version".
+# Run the app (extra args con ARGS="--version"). Requiere root para el I2C
+# de bcm2835 (/dev/mem), igual que examples/Makefile usa sudo para /dev/i2c-*.
+# Sin sudo la app corre en modo consola (sin lecturas).
 run: all
-	$(TARGET) $(ARGS)
+	sudo $(TARGET) $(ARGS)
 
 # Install the binary to /usr/local/bin (DESTDIR supported for packaging).
 install: all

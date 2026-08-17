@@ -16,10 +16,11 @@ The version is baked in at compile time from the VERSION file.
 ## Ejemplos
 
 ```bash
-./bin/App --version        # App v0.1.1
+./bin/App --version        # App vX.Y.Z
 ./bin/App --help           # ayuda
 sudo ./bin/App             # lecturas de sensores + OLED (bcm2835 I2C necesita root)
-./bin/App                  # sin root: modo consola (sin sensores ni OLED), sin crash
+sudo make run              # igual que arriba (make run usa sudo)
+./bin/App                  # sin root: modo consola (sin lecturas), sin crash
 ```
 
 > **Root**: los sensores AHT21B/BH1750 y el OLED usan el I2C de bcm2835, que
