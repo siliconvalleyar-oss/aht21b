@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
+#include <unistd.h>
 
 #include <nlohmann/json.hpp>
 
@@ -143,6 +144,18 @@ bool Device_t::initHardware() {
     // apropiado); si falla, la app avisa y sigue con solo consola.
     if (!bcm2835_init()) {
         std::fprintf(stderr, "[hw] bcm2835_init() failed; running without hardware\n");
+        return false;
+    }
+
+    // IMPORTANTE (bcm2835 v1.71): sin root, init() "tiene exito" pero solo
+    // mapea /dev/gpiomem (exclusivamente GPIO). El puntero de I2C (bsc1)
+    // queda en MAP_FAILED y cualquier acceso I2C (set_baudrate, writes) escribe
+    // sobre una direccion invalida -> SIGSEGV. Los sensores y el OLED necesitan
+    // I2C real (/dev/mem), asi que sin root se continua en modo consola.
+    if (geteuid() != 0) {
+        std::fprintf(stderr,
+                     "[hw] bcm2835 I2C (sensores/OLED) requiere root: ejecutar "
+                     "con 'sudo ./bin/App'; sin root la app corre en modo consola\n");
         return false;
     }
 
