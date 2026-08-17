@@ -80,7 +80,9 @@ all: $(TARGET)
 $(TARGET): $(OBJS) | $(BIN_DIR)
 	$(CXX) $(CRT_BEGIN) $(OBJS) $(CRT_END) -o $@ $(LDFLAGS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+# VERSION is a real prerequisite (not order-only) so that any version bump
+# forces every object to rebuild and the new -DVERSION="x.y.z" gets baked in.
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp VERSION
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
