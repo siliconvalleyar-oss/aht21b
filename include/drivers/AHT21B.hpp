@@ -52,8 +52,11 @@ public:
     bool isReady() const { return ready_; }
 
 private:
-    // Envía un comando de 3 bytes por I2C al sensor.
-    bool writeCommand(uint8_t c0, uint8_t c1, uint8_t c2);
+    // Envía un comando de 3 bytes por I2C al sensor. `timeoutUs` permite dar
+    // más margen al trigger (0xAC): el sensor estira SCL durante la
+    // conversión, que arranca dentro del propio write.
+    bool writeCommand(uint8_t c0, uint8_t c1, uint8_t c2,
+                      uint32_t timeoutUs = 100000);
 
     // CRC8 (polinomio 0x31, init 0xFF) sobre `len` bytes; usado para validar
     // el paquete de 6 bytes de la medición.

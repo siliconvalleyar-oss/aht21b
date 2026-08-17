@@ -57,11 +57,12 @@ bool AHT21B_t::begin() {
     return true;
 }
 
-bool AHT21B_t::writeCommand(uint8_t c0, uint8_t c1, uint8_t c2) {
+bool AHT21B_t::writeCommand(uint8_t c0, uint8_t c1, uint8_t c2,
+                            uint32_t timeoutUs) {
     // Envía el comando de 3 bytes al sensor en una sola transacción (con
     // timeout acotado: ver drivers/I2C_bus.hpp).
     const uint8_t cmd[3] = {c0, c1, c2};
-    return I2C::write(address_, cmd, sizeof(cmd));
+    return I2C::write(address_, cmd, sizeof(cmd), timeoutUs);
 }
 
 bool AHT21B_t::read(float* temperatureC, float* humidityPct) {
@@ -69,8 +70,11 @@ bool AHT21B_t::read(float* temperatureC, float* humidityPct) {
         return false;
     }
 
-    // 1) Disparar la medición (0xAC 0x33 0x00) y esperar la conversión.
-    if (!writeCommand(Command::kTrigger, 0x33, 0x00)) {
+    // 1) Disparar la medición (0xAC 0x33 0x00) y esperar la conversión. El
+    //    trigger necesita un timeout generoso: el sensor estira SCL durante
+    //    la conversión (~80 ms según datasheet), que arranca dentro del
+    //    propio write; con 100 ms quedaba al límite y fallaba intermitente.
+    if (!writeCommand(Command::kTrigger, 0x33, 0x00, 500000)) {
         std::fprintf(stderr, "[AHT21B] trigger command rejected\n");
         return false;
     }
